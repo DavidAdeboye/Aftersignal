@@ -15,3 +15,6 @@ shape = SubResource("CapsuleShape3D_6pmnr")
 [node name="Head" type="Node3D" parent="." unique_id=1837085441]
 
 [node name="Camera3D" type="Camera3D" parent="Head" unique_id=1698909904]
+
+[node name="RayCast3D" type="RayCast3D" parent="Head/Camera3D" unique_id=384101216]
+target_position = Vector3(0, -1, -3)
