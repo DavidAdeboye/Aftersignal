@@ -4,6 +4,8 @@ extends CharacterBody3D
 ##   - CollisionShape3D (capsule, matching a human-ish height)
 ##   - A Node3D called "Head" as a child, with a Camera3D as its child
 ##   - Camera3D should have a RayCast3D child pointed forward (Z: -3)
+##   - A MeshInstance3D (capsule) for the visible body
+##   - A MultiplayerSynchronizer syncing position and rotation
 ## Head handles vertical look (pitch); the body handles horizontal look (yaw).
 
 @export var walk_speed: float = 3.5
@@ -18,13 +20,23 @@ extends CharacterBody3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var current_interactable: Interactable = null
 
+# Shared across _ready() and _physics_process() — script-level, not local
+var spawn_points: Array = [Vector3(-2, 1, 0), Vector3(2, 1, 0)]
+var spawn_colors: Array = [Color(0.15, 0.55, 0.95), Color(0.95, 0.45, 0.15)]  # blue host, orange client
+var spawn_index: int = 0
 
-func _ready() -> void:
+
+func _enter_tree() -> void:
+	# Must happen here, not in _ready() — MultiplayerSynchronizer needs
+	# authority set before the node fully enters the tree.
 	set_multiplayer_authority(int(str(name)))
 
-	var spawn_points := [Vector3(-2, 1, 0), Vector3(2, 1, 0)]
-	var spawn_colors := [Color(0.15, 0.55, 0.95), Color(0.95, 0.45, 0.15)]  # blue host, orange client
-	var spawn_index := 0 if int(str(name)) == 1 else 1
+
+func _ready() -> void:
+	# Deterministic spawn position/color — every peer computes this identically,
+	# since it only depends on this node's own (replicated) name.
+	# Peer id 1 is always the server/host by Godot convention.
+	spawn_index = 0 if int(str(name)) == 1 else 1
 	position = spawn_points[spawn_index]
 
 	var mesh_instance: MeshInstance3D = $MeshInstance3D
@@ -83,6 +95,12 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	_update_interactable()
+
+	# Safety net — if you fall off the edge of the world, get sent back to spawn
+	# instead of falling forever.
+	if global_position.y < -20:
+		global_position = spawn_points[spawn_index]
+		velocity = Vector3.ZERO
 
 
 func _update_interactable() -> void:
