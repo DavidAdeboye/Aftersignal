@@ -20,18 +20,17 @@ var current_interactable: Interactable = null
 
 
 func _ready() -> void:
-	# The node's NAME (set to the peer id by network_manager.gd) is the one
-	# thing that reliably replicates to every peer via the MultiplayerSpawner.
-	# Deriving authority from it here means each peer independently figures
-	# out "is this mine?" without needing anything pushed over the network.
 	set_multiplayer_authority(int(str(name)))
 
-	# Deterministic spawn position — every peer computes this identically,
-	# since it only depends on this node's own (replicated) name.
-	# Peer id 1 is always the server/host by Godot convention.
 	var spawn_points := [Vector3(-2, 1, 0), Vector3(2, 1, 0)]
+	var spawn_colors := [Color(0.15, 0.55, 0.95), Color(0.95, 0.45, 0.15)]  # blue host, orange client
 	var spawn_index := 0 if int(str(name)) == 1 else 1
 	position = spawn_points[spawn_index]
+
+	var mesh_instance: MeshInstance3D = $MeshInstance3D
+	var material := StandardMaterial3D.new()
+	material.albedo_color = spawn_colors[spawn_index]
+	mesh_instance.set_surface_override_material(0, material)
 
 	call_deferred("_setup_local_player")
 
