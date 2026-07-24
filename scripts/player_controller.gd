@@ -1,5 +1,4 @@
 extends CharacterBody3D
-
 ## First-person controller — Aftersignal
 ## Attach this script to a CharacterBody3D root that has:
 ##   - CollisionShape3D (capsule, matching a human-ish height)
@@ -21,12 +20,25 @@ var current_interactable: Interactable = null
 
 
 func _ready() -> void:
+	# Defer authority check by one frame — on clients, multiplayer authority
+	# data needs a moment to replicate before is_multiplayer_authority() is reliable.
+	call_deferred("_setup_local_player")
+
+
+func _setup_local_player() -> void:
+	if not is_multiplayer_authority():
+		return
+	camera.current = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not is_multiplayer_authority():
+		return
+
 	if event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
 	if event is InputEventMouseButton and event.pressed:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -40,6 +52,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not is_multiplayer_authority():
+		return
+
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 
@@ -67,5 +82,6 @@ func _update_interactable() -> void:
 			current_interactable = collider
 			interact_prompt.visible = true
 			return
+
 	current_interactable = null
 	interact_prompt.visible = false
