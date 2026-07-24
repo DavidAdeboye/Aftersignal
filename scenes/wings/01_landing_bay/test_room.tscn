@@ -2,13 +2,30 @@
 
 [ext_resource type="PackedScene" uid="uid://drdhp85cl2kba" path="res://scenes/shared/player.tscn" id="1_lqvtp"]
 [ext_resource type="Script" uid="uid://d3med2nppflwa" path="res://scripts/interactable.gd" id="2_uf3s3"]
+[ext_resource type="Script" uid="uid://b4vdbxhtwsg5l" path="res://scripts/test_log.gd" id="3_i28js"]
+[ext_resource type="Script" uid="uid://sjvhd330lgff" path="res://scripts/pickup_item.gd" id="4_iwu5t"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_6pmnr"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uf3s3"]
+albedo_color = Color(0.07058824, 0.42745098, 1, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qa2gp"]
+size = Vector3(0.5, 0.3, 0.26689452)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i28js"]
+albedo_color = Color(0.69411767, 0.40784314, 0.28627452, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_iwu5t"]
+size = Vector3(0.3, 0.3, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tollk"]
+albedo_color = Color(0.29411766, 1, 1, 1)
 
 [node name="TestRoom" type="Node3D" unique_id=146093001]
 
 [node name="Floor" type="CSGBox3D" parent="." unique_id=2146038661]
-transform = Transform3D(0.9999939, 0, -0.0034906515, 0, 1, 0, 0.0034906515, 0, 0.9999939, -0.013198853, -2.3841858e-07, 0.00089883804)
+transform = Transform3D(0.9999939, 0, -0.0034906515, 0, 1, 0, 0.0034906515, 0, 0.9999939, 0.28233242, -0.16201127, 0.36681843)
 use_collision = true
 size = Vector3(20, 0.5, 20)
 
@@ -26,7 +43,7 @@ size = Vector3(20, 3, 0.5)
 transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
 
 [node name="Player" parent="." unique_id=989136199 instance=ExtResource("1_lqvtp")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.760432, 4.2511396, -0.030276299)
 
 [node name="TestTerminal" type="StaticBody3D" parent="." unique_id=1664700923]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.5, 0)
@@ -36,3 +53,28 @@ script = ExtResource("2_uf3s3")
 shape = SubResource("BoxShape3D_6pmnr")
 
 [node name="CSGBox3D" type="CSGBox3D" parent="TestTerminal" unique_id=1675606924]
+material = SubResource("StandardMaterial3D_uf3s3")
+
+[node name="TestLog" type="StaticBody3D" parent="." unique_id=938861798]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.3, 0)
+script = ExtResource("3_i28js")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TestLog" unique_id=1762051952]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.06655274)
+shape = SubResource("BoxShape3D_qa2gp")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="TestLog" unique_id=1421459385]
+size = Vector3(0.5, 0.3, 0.4)
+material = SubResource("StandardMaterial3D_i28js")
+
+[node name="TestPickup" type="StaticBody3D" parent="." unique_id=115180254]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -3)
+script = ExtResource("4_iwu5t")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TestPickup" unique_id=1352291390]
+shape = SubResource("BoxShape3D_iwu5t")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="TestPickup" unique_id=613729559]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -3)
+size = Vector3(0.3, 0.3, 0.3)
+material = SubResource("StandardMaterial3D_tollk")
