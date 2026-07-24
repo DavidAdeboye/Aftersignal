@@ -16,11 +16,8 @@ size = Vector3(0.5, 0.3, 0.26689452)
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i28js"]
 albedo_color = Color(0.69411767, 0.40784314, 0.28627452, 1)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_iwu5t"]
-size = Vector3(0.3, 0.3, 0.3)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tollk"]
-albedo_color = Color(0.29411766, 1, 1, 1)
+[sub_resource type="BoxShape3D" id="BoxShape3D_xg6vf"]
+size = Vector3(0.5, 0.5, 0.5)
 
 [node name="TestRoom" type="Node3D" unique_id=146093001]
 
@@ -67,14 +64,12 @@ shape = SubResource("BoxShape3D_qa2gp")
 size = Vector3(0.5, 0.3, 0.4)
 material = SubResource("StandardMaterial3D_i28js")
 
-[node name="TestPickup" type="StaticBody3D" parent="." unique_id=115180254]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -3)
+[node name="TestPickup" type="StaticBody3D" parent="." unique_id=2011904470]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.5, 0)
 script = ExtResource("4_iwu5t")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="TestPickup" unique_id=1352291390]
-shape = SubResource("BoxShape3D_iwu5t")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TestPickup" unique_id=157523211]
+shape = SubResource("BoxShape3D_xg6vf")
 
-[node name="CSGBox3D" type="CSGBox3D" parent="TestPickup" unique_id=613729559]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -3)
-size = Vector3(0.3, 0.3, 0.3)
-material = SubResource("StandardMaterial3D_tollk")
+[node name="CSGBox3D" type="CSGBox3D" parent="TestPickup" unique_id=1035817117]
+size = Vector3(0.5, 0.5, 0.5)
