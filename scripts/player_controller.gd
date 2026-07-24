@@ -14,6 +14,7 @@ extends CharacterBody3D
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var interact_ray: RayCast3D = $Head/Camera3D/RayCast3D
+@onready var interact_prompt: Label = $CanvasLayer/InteractPrompt
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var current_interactable: Interactable = null
@@ -64,5 +65,7 @@ func _update_interactable() -> void:
 		var collider = interact_ray.get_collider()
 		if collider is Interactable:
 			current_interactable = collider
+			interact_prompt.visible = true
 			return
 	current_interactable = null
+	interact_prompt.visible = false
