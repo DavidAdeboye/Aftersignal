@@ -79,3 +79,18 @@ func _spawn_player(id: int) -> void:
 	player_instance.set_multiplayer_authority(id)
 	player_instance.position = Vector3(randf_range(-2.0, 2.0), 1.0, randf_range(-2.0, 2.0))
 	players_node.add_child(player_instance, true)
+	
+	
+	
+@rpc("any_peer", "call_local")
+func receive_chat_message(formatted_text: String) -> void:
+	var local_player = _get_local_player()
+	if local_player:
+		local_player.call_deferred("_append_chat_line", formatted_text)
+
+
+func _get_local_player() -> Node:
+	for child in players_node.get_children():
+		if child.is_multiplayer_authority():
+			return child
+	return null

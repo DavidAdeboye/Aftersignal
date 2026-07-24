@@ -56,5 +56,30 @@ grow_vertical = 0
 text = "Press E to interact
 "
 
+[node name="ChatInput" type="LineEdit" parent="CanvasLayer" unique_id=470962126]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -34.25
+offset_top = -31.0
+offset_right = 34.25
+grow_horizontal = 2
+grow_vertical = 0
+placeholder_text = "Press Enter to chat"
+
+[node name="ChatLog" type="RichTextLabel" parent="CanvasLayer" unique_id=2109562520]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 20.0
+offset_bottom = 170.0
+grow_horizontal = 2
+bbcode_enabled = true
+autowrap_mode = 2
+
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1925285427]
 replication_config = SubResource("SceneReplicationConfig_rg3vr")
+
+[connection signal="text_submitted" from="CanvasLayer/ChatInput" to="." method="_on_chat_submitted"]
