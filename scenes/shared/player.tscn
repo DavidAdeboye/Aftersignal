@@ -79,6 +79,12 @@ grow_horizontal = 2
 bbcode_enabled = true
 autowrap_mode = 2
 
+[node name="SignalIndicator" type="Label" parent="CanvasLayer" unique_id=1162451468]
+offset_left = 982.0
+offset_top = 19.0
+offset_right = 1022.0
+offset_bottom = 42.0
+
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1925285427]
 replication_config = SubResource("SceneReplicationConfig_rg3vr")
 

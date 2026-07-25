@@ -4,8 +4,7 @@ const PORT: int = 7000
 const MAX_PLAYERS: int = 2
 const PLAYER_SCENE = preload("res://scenes/shared/player.tscn")
 
-@onready var players_node: Node3D = get_tree().current_scene.get_node("Players")
-
+var players_node: Node3D = null
 var game_started: bool = false
 
 
@@ -14,6 +13,15 @@ func _ready() -> void:
 		multiplayer.peer_connected.connect(_on_peer_connected)
 	if not multiplayer.peer_disconnected.is_connected(_on_peer_disconnected):
 		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+
+
+func _get_players_node() -> Node3D:
+	# Looked up fresh (not cached at startup) since the game now starts on
+	# the main menu scene, which has no "Players" node — this only resolves
+	# correctly once we've transitioned into the actual game scene.
+	if players_node == null or not is_instance_valid(players_node):
+		players_node = get_tree().current_scene.get_node("Players")
+	return players_node
 
 
 func host_game() -> void:
@@ -61,7 +69,7 @@ func _on_peer_connected(id: int) -> void:
 
 
 func _on_peer_disconnected(id: int) -> void:
-	var player_node = players_node.get_node_or_null(str(id))
+	var player_node = _get_players_node().get_node_or_null(str(id))
 	if player_node:
 		player_node.queue_free()
 
@@ -69,8 +77,10 @@ func _on_peer_disconnected(id: int) -> void:
 func _spawn_player(id: int) -> void:
 	print("_spawn_player called for id: ", id, " | is_server: ", multiplayer.is_server())
 
+	var players := _get_players_node()
+
 	# Guard: don't spawn if this player already exists
-	if players_node.has_node(str(id)):
+	if players.has_node(str(id)):
 		print("Player ", id, " already spawned, skipping")
 		return
 
@@ -78,10 +88,9 @@ func _spawn_player(id: int) -> void:
 	player_instance.name = str(id)
 	player_instance.set_multiplayer_authority(id)
 	player_instance.position = Vector3(randf_range(-2.0, 2.0), 1.0, randf_range(-2.0, 2.0))
-	players_node.add_child(player_instance, true)
-	
-	
-	
+	players.add_child(player_instance, true)
+
+
 @rpc("any_peer", "call_local")
 func receive_chat_message(formatted_text: String) -> void:
 	var local_player = _get_local_player()
@@ -90,7 +99,18 @@ func receive_chat_message(formatted_text: String) -> void:
 
 
 func _get_local_player() -> Node:
-	for child in players_node.get_children():
+	for child in _get_players_node().get_children():
 		if child.is_multiplayer_authority():
 			return child
 	return null
+	
+func request_host() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	host_game()
+
+
+func request_join(ip: String) -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	join_game(ip)

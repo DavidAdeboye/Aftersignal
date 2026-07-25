@@ -22,6 +22,7 @@ var signal_quality: float = 0.0
 @onready var interact_prompt: Label = $CanvasLayer/InteractPrompt
 @onready var chat_input: LineEdit = $CanvasLayer/ChatInput
 @onready var chat_log: RichTextLabel = $CanvasLayer/ChatLog
+@onready var signal_indicator: Label = $CanvasLayer/SignalIndicator
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var current_interactable: Interactable = null
@@ -129,6 +130,17 @@ func _update_chat_range() -> void:
 		in_chat_range = false
 		signal_quality = 0.0
 
+	_update_signal_indicator()
+
+func _update_signal_indicator() -> void:
+	if not in_chat_range:
+		signal_indicator.text = ""
+	elif signal_quality > 0.75:
+		signal_indicator.text = "Signal: Strong"
+	elif signal_quality > 0.35:
+		signal_indicator.text = "Signal: Weak"
+	else:
+		signal_indicator.text = "Signal: Static"
 
 func _update_interactable() -> void:
 	if interact_ray.is_colliding():
