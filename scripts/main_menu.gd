@@ -13,7 +13,7 @@ func _ready() -> void:
 
 func _on_host_pressed() -> void:
 	status_label.text = "Hosting..."
-	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/test_room.tscn")
+	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.tscn")
 	NetworkManager.request_host()
 
 
@@ -22,9 +22,9 @@ func _on_join_pressed() -> void:
 	if ip == "":
 		ip = "127.0.0.1"
 	status_label.text = "Joining " + ip + "..."
-	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/test_room.tscn")
+	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.tscn")
 	NetworkManager.request_join(ip)
-	
-	
+
+
 func _go_to_game() -> void:
-	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/test_room.tscn")
+	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.tscn")
