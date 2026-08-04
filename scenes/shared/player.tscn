@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://drdhp85cl2kba"]
+[gd_scene load_steps=6 format=3 uid="uid://drdhp85cl2kba"]
 
 [ext_resource type="Script" uid="uid://cvhecb8ctvr77" path="res://scripts/player_controller.gd" id="1_4flbx"]
+[ext_resource type="Script" uid="uid://cg1yphpad00001" path="res://scripts/glyph_pad.gd" id="2_glyph"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6pmnr"]
 radius = 0.4
@@ -91,6 +92,50 @@ offset_left = 434.0
 offset_top = 308.0
 offset_right = 668.0
 offset_bottom = 419.0
+
+[node name="MessagePanel" type="PanelContainer" parent="CanvasLayer" unique_id=1841002551]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -160.0
+offset_right = 300.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MessageLabel" type="Label" parent="CanvasLayer/MessagePanel" unique_id=1841002552]
+layout_mode = 2
+theme_override_constants/line_spacing = 4
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="GlyphPad" type="Control" parent="CanvasLayer" unique_id=1841002560]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -160.0
+offset_right = 160.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_glyph")
+
+[node name="GlyphHint" type="Label" parent="CanvasLayer/GlyphPad" unique_id=1841002561]
+layout_mode = 0
+offset_top = -26.0
+offset_right = 320.0
+offset_bottom = -3.0
+text = "GLYPH RELAY — drag to draw · G to close"
+horizontal_alignment = 1
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1925285427]
 replication_config = SubResource("SceneReplicationConfig_rg3vr")

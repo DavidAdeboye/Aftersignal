@@ -42,7 +42,7 @@ placeholder_text = "127.0.0.1"
 
 [node name="JoinButton" type="Button" parent="Panel1/HBoxContainer" unique_id=2019940465]
 layout_mode = 2
-text = "JoinButton"
+text = "Join Game"
 
 [node name="StatusLabel" type="Label" parent="Panel1" unique_id=1661766896]
 layout_mode = 2

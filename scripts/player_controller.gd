@@ -24,12 +24,17 @@ var signal_quality: float = 0.0
 @onready var chat_log: RichTextLabel = $CanvasLayer/ChatLog
 @onready var signal_indicator: Label = $CanvasLayer/SignalIndicator
 @onready var keypad_input: LineEdit = $CanvasLayer/KeypadInput
+@onready var message_panel: PanelContainer = $CanvasLayer/MessagePanel
+@onready var message_label: Label = $CanvasLayer/MessagePanel/MessageLabel
+@onready var glyph_pad: Control = $CanvasLayer/GlyphPad
+
+var _message_timer: SceneTreeTimer = null
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var current_interactable: Interactable = null
 var active_keypad: Node = null
 
-var spawn_points: Array = [Vector3(-2, 1, 0), Vector3(2, 1, 0)]
+var spawn_points: Array = [Vector3(-2, 1, 13), Vector3(2, 1, 13)]
 var spawn_colors: Array = [Color(0.15, 0.55, 0.95), Color(0.95, 0.45, 0.15)]
 var spawn_index: int = 0
 var chat_lines: Array[String] = []
@@ -72,6 +77,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		chat_input.grab_focus()
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
+	# Glyph sketch pad — toggle the shared drawing device on/off.
+	if event.is_action_pressed("toggle_glyph") and not chat_input.visible and not keypad_input.visible:
+		_toggle_glyph_pad()
+
 	if event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
@@ -90,7 +99,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			keypad_input.grab_focus()
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
-			current_interactable.interact()
+			current_interactable.interact(self)
 
 
 func _physics_process(delta: float) -> void:
@@ -136,11 +145,31 @@ func _update_chat_range() -> void:
 			signal_quality = 1.0 - ((distance - clear_range) / (chat_range - clear_range))
 		else:
 			signal_quality = 0.0
+
+		# Radio dead-zones (SignalJammer nodes) further degrade the signal while
+		# either player stands inside them — forcing the pair to relocate for a
+		# clean channel. We apply the worst jam affecting EITHER player, since a
+		# radio link is only as good as its weakest end.
+		var jam := _worst_jam_multiplier(global_position)
+		jam = min(jam, _worst_jam_multiplier(other.global_position))
+		signal_quality *= jam
+		if signal_quality <= 0.0:
+			in_chat_range = false
 	else:
 		in_chat_range = false
 		signal_quality = 0.0
 
 	_update_signal_indicator()
+
+
+## Returns the strongest jam multiplier (lowest value) affecting a world point,
+## by polling every registered SignalJammer. 1.0 = no jamming here.
+func _worst_jam_multiplier(world_pos: Vector3) -> float:
+	var worst := 1.0
+	for jammer in get_tree().get_nodes_in_group("signal_jammers"):
+		if jammer.has_method("signal_multiplier_for"):
+			worst = min(worst, jammer.signal_multiplier_for(world_pos))
+	return worst
 
 
 func _update_signal_indicator() -> void:
@@ -216,3 +245,51 @@ func _on_keypad_submitted(text: String) -> void:
 	keypad_input.text = ""
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	active_keypad = null
+	show_message("Access granted. Door unlocked.")
+
+
+# ============================================================================
+#  GLYPH SKETCH PAD (shared drawing relay)
+# ============================================================================
+
+## Opens/closes the handheld sketch pad. While open the mouse is freed so the
+## player can draw; closing it recaptures the mouse for look controls.
+func _toggle_glyph_pad() -> void:
+	if glyph_pad == null:
+		return
+	var show := not glyph_pad.visible
+	glyph_pad.visible = show
+	if show:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+## Called by NetworkManager when the partner draws a stroke on their pad.
+func receive_glyph_stroke(stroke: PackedVector2Array) -> void:
+	if glyph_pad and glyph_pad.has_method("receive_remote_stroke"):
+		glyph_pad.receive_remote_stroke(stroke)
+
+
+## Called by NetworkManager when a shared "clear" is broadcast.
+func clear_glyph_pad() -> void:
+	if glyph_pad and glyph_pad.has_method("clear_all"):
+		glyph_pad.clear_all()
+
+
+## Shows a message on this player's HUD for a few seconds. Called by
+## interactables (logs, code displays, pickups) and by puzzle feedback.
+## Safe to call on non-authoritative instances — it just no-ops there.
+func show_message(text: String, duration: float = 4.0) -> void:
+	if not is_multiplayer_authority():
+		return
+	if message_label == null or message_panel == null:
+		return
+	message_label.text = text
+	message_panel.visible = true
+	_message_timer = get_tree().create_timer(duration)
+	var timer_ref := _message_timer
+	await timer_ref.timeout
+	# Only hide if no newer message replaced this one in the meantime.
+	if _message_timer == timer_ref:
+		message_panel.visible = false

@@ -90,6 +90,10 @@ func _spawn_player(id: int) -> void:
 	player_instance.position = Vector3(randf_range(-2.0, 2.0), 1.0, randf_range(-2.0, 2.0))
 	players.add_child(player_instance, true)
 
+	# Re-apply any persisted "opened" doors once the world has a player in it,
+	# so a session that rejoins finds previously-solved doors already open.
+	PuzzleState.call_deferred("apply_persisted_doors")
+
 
 @rpc("any_peer", "call_local")
 func receive_chat_message(formatted_text: String) -> void:
@@ -117,6 +121,33 @@ func request_join(ip: String) -> void:
 	
 @rpc("any_peer", "call_local")
 func unlock_door(door_path: NodePath) -> void:
-	var door = get_tree().current_scene.get_node(door_path)
+	var door = get_tree().current_scene.get_node_or_null(door_path)
 	if door:
 		door.opened = true
+
+
+@rpc("any_peer", "call_local")
+func lock_door(door_path: NodePath) -> void:
+	# Used by simultaneous-action puzzles: the shared door re-closes the moment
+	# either pressure plate is released.
+	var door = get_tree().current_scene.get_node_or_null(door_path)
+	if door:
+		door.opened = false
+
+
+## Relays a completed glyph stroke to the OTHER player's sketch pad. Same
+## routing pattern as chat: the RPC runs on every peer, but each peer only
+## applies it to a pad that ISN'T its own local player's — i.e. the sender sees
+## their own stroke locally (already drawn), the partner sees it as "remote".
+@rpc("any_peer", "call_remote")
+func send_glyph_stroke(stroke: PackedVector2Array) -> void:
+	var local_player = _get_local_player()
+	if local_player and local_player.has_method("receive_glyph_stroke"):
+		local_player.receive_glyph_stroke(stroke)
+
+
+@rpc("any_peer", "call_local")
+func clear_glyphs() -> void:
+	var local_player = _get_local_player()
+	if local_player and local_player.has_method("clear_glyph_pad"):
+		local_player.clear_glyph_pad()

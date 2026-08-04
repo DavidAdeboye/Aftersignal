@@ -89,7 +89,7 @@ Aftersignal/
 
 ## Status
 
-🚧 Early development — project scaffolded, tutorial/basics in progress.
+🚧 Early development — networking, proximity/radio chat, and Wing 1's first code-sharing puzzle are playable end to end. Persistence and further wing content next.
 
 ## License
 
