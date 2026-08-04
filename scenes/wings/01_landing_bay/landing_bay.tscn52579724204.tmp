@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://mo6brx2grrx8"]
+
+[ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/rooms/storage_room_node.tscn" id="1_t2lcc"]
+[ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/rooms/hall_node.tscn" id="2_n6g7w"]
+
+[node name="LandingBay" type="Node3D" unique_id=1747541882]
+
+[node name="StorageRoom" parent="." unique_id=143509229 instance=ExtResource("1_t2lcc")]
+transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Players" type="Node3D" parent="." unique_id=525854723]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=100548545]
+_spawnable_scenes = PackedStringArray("uid://drdhp85cl2kba")
+spawn_path = NodePath("../Players")
+
+[node name="Hall" parent="." unique_id=731333220 instance=ExtResource("2_n6g7w")]
+transform = Transform3D(-0.009143507, -4.3709562e-08, -0.9999582, 4.3709562e-08, 1, -4.411106e-08, 0.9999582, -4.411106e-08, -0.009143507, 0.045137405, 0, -10.007208)

@@ -23,9 +23,11 @@ var signal_quality: float = 0.0
 @onready var chat_input: LineEdit = $CanvasLayer/ChatInput
 @onready var chat_log: RichTextLabel = $CanvasLayer/ChatLog
 @onready var signal_indicator: Label = $CanvasLayer/SignalIndicator
+@onready var keypad_input: LineEdit = $CanvasLayer/KeypadInput
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var current_interactable: Interactable = null
+var active_keypad: Node = null
 
 var spawn_points: Array = [Vector3(-2, 1, 0), Vector3(2, 1, 0)]
 var spawn_colors: Array = [Color(0.15, 0.55, 0.95), Color(0.95, 0.45, 0.15)]
@@ -48,6 +50,8 @@ func _ready() -> void:
 
 	if not is_multiplayer_authority():
 		$CanvasLayer.visible = false
+
+	keypad_input.text_submitted.connect(_on_keypad_submitted)
 
 	call_deferred("_setup_local_player")
 
@@ -80,7 +84,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-85), deg_to_rad(85))
 
 	if event.is_action_pressed("interact") and current_interactable:
-		current_interactable.interact()
+		if current_interactable.has_method("check_code"):
+			active_keypad = current_interactable
+			keypad_input.visible = true
+			keypad_input.grab_focus()
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		else:
+			current_interactable.interact()
 
 
 func _physics_process(delta: float) -> void:
@@ -132,6 +142,7 @@ func _update_chat_range() -> void:
 
 	_update_signal_indicator()
 
+
 func _update_signal_indicator() -> void:
 	if not in_chat_range:
 		signal_indicator.text = ""
@@ -141,6 +152,7 @@ func _update_signal_indicator() -> void:
 		signal_indicator.text = "Signal: Weak"
 	else:
 		signal_indicator.text = "Signal: Static"
+
 
 func _update_interactable() -> void:
 	if interact_ray.is_colliding():
@@ -191,3 +203,16 @@ func _garble_text(text: String, quality: float) -> String:
 		else:
 			result += "-"
 	return result
+
+
+func _on_keypad_submitted(text: String) -> void:
+	if active_keypad and not active_keypad.check_code(text.strip_edges()):
+		keypad_input.modulate = Color.RED
+		await get_tree().create_timer(0.3).timeout
+		keypad_input.modulate = Color.WHITE
+		keypad_input.text = ""
+		return
+	keypad_input.visible = false
+	keypad_input.text = ""
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	active_keypad = null

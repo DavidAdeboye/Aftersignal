@@ -1,7 +1,5 @@
 class_name QuaterniusDoorBody
-extends KinematicBody
-
-
+extends CharacterBody3D
 ## Quaternius Door Body
 ##
 ## This script is the door body. This is usually found by RayCast or
@@ -10,10 +8,8 @@ extends KinematicBody
 ## To control the door (move or disable), access the door object using
 ## the door variable.
 
-
 ## Door move distance
-export var distance : Vector3 = Vector3(1.0, 0.0, 0.0)
-
+@export var distance: Vector3 = Vector3(1.0, 0.0, 0.0)
 
 ## Parent door
-onready var door : QuaterniusDoor = get_parent()
+@onready var door: QuaterniusDoor = get_parent()

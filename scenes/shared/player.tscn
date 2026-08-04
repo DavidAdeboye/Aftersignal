@@ -85,6 +85,13 @@ offset_top = 19.0
 offset_right = 1022.0
 offset_bottom = 42.0
 
+[node name="KeypadInput" type="LineEdit" parent="CanvasLayer" unique_id=1473819734]
+visible = false
+offset_left = 434.0
+offset_top = 308.0
+offset_right = 668.0
+offset_bottom = 419.0
+
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1925285427]
 replication_config = SubResource("SceneReplicationConfig_rg3vr")
 

@@ -114,3 +114,9 @@ func request_join(ip: String) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	join_game(ip)
+	
+@rpc("any_peer", "call_local")
+func unlock_door(door_path: NodePath) -> void:
+	var door = get_tree().current_scene.get_node(door_path)
+	if door:
+		door.opened = true

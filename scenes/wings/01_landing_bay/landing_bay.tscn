@@ -1,13 +1,54 @@
 [gd_scene format=3 uid="uid://mo6brx2grrx8"]
 
+[ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/rooms/hall_end_node.tscn" id="1_afur4"]
 [ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/rooms/storage_room_node.tscn" id="1_t2lcc"]
+[ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/rooms/hall_node.tscn" id="2_n6g7w"]
+[ext_resource type="Script" uid="uid://bw6rbs12drxbw" path="res://scripts/code_display.gd" id="4_jgmub"]
+[ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/props/meshes/props_chest_bottom_mesh.tscn" id="4_mf243"]
+[ext_resource type="Script" uid="uid://coa73tjnpuxx5" path="res://scripts/keypad.gd" id="6_1chmp"]
+[ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/props/meshes/props_computer_small_mesh.tscn" id="6_l5vh2"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6pmnr"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_l5vh2"]
 
 [node name="LandingBay" type="Node3D" unique_id=1747541882]
 
+[node name="HallEnd" parent="." unique_id=384589159 instance=ExtResource("1_afur4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -20)
+
 [node name="StorageRoom" parent="." unique_id=143509229 instance=ExtResource("1_t2lcc")]
+transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 1, -0.050872803, 0, -0.028442383)
 
 [node name="Players" type="Node3D" parent="." unique_id=525854723]
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=100548545]
 _spawnable_scenes = PackedStringArray("uid://drdhp85cl2kba")
 spawn_path = NodePath("../Players")
+
+[node name="Hall" parent="." unique_id=731333220 instance=ExtResource("2_n6g7w")]
+transform = Transform3D(-0.009143507, -4.3709562e-08, -0.9999582, 4.3709562e-08, 1, -4.411106e-08, 0.9999582, -4.411106e-08, -0.009143507, 0.045137405, 0, -10.007208)
+
+[node name="CodeDisplay" type="StaticBody3D" parent="." unique_id=1730988824]
+script = ExtResource("4_jgmub")
+
+[node name="PropsChestBottomMesh" parent="CodeDisplay" unique_id=1811343955 instance=ExtResource("4_mf243")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7997575, 0, 12.624357)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CodeDisplay" unique_id=1094682737]
+transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 2.8, 0.09461528, 12.6)
+shape = SubResource("BoxShape3D_6pmnr")
+
+[node name="Keypad" type="StaticBody3D" parent="." unique_id=664626627]
+transform = Transform3D(-0.99731094, 0, -0.07328567, 0, 1, 0, 0.07328567, 0, -0.99731094, -2.3658795, 0, -10.58009)
+script = ExtResource("6_1chmp")
+door_path = NodePath("../Hall/Doors/DoorDouble1")
+
+[node name="PropsComputerSmallMesh" parent="Keypad" unique_id=550989599 instance=ExtResource("6_l5vh2")]
+transform = Transform3D(0.9725356, 0, -0.23275407, 0, 1, 0, 0.23275407, 0, 0.9725356, 0, 0, -1.4984002)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Keypad" unique_id=709032065]
+transform = Transform3D(0.97174007, 0, -0.23605362, 0, 1, 0, 0.23605362, 0, 0.97174007, 0.20693296, 0.5880387, -1.6439915)
+shape = SubResource("BoxShape3D_l5vh2")
+
+[editable path="Hall"]
