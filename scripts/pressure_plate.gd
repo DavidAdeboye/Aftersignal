@@ -24,12 +24,14 @@ class_name PressurePlate
 
 ## Visual feedback: the mesh sinks by this much (meters) while pressed.
 @export var press_depth: float = 0.08
+@export var release_delay: float = 1.2
 
 @onready var _detector: Area3D = $Detector
 
 var _pressed: bool = false
 var _rest_y: float = 0.0
 var _bodies_on: int = 0
+var _release_timer: SceneTreeTimer = null
 
 
 func _ready() -> void:
@@ -50,6 +52,7 @@ func _on_body_entered(body: Node) -> void:
 	if not (body is CharacterBody3D):
 		return
 	_bodies_on += 1
+	_release_timer = null  # Cancel any pending release timer
 	if not _pressed:
 		_set_pressed(true)
 
@@ -59,7 +62,12 @@ func _on_body_exited(body: Node) -> void:
 		return
 	_bodies_on = max(0, _bodies_on - 1)
 	if _bodies_on == 0 and _pressed:
-		_set_pressed(false)
+		_release_timer = get_tree().create_timer(release_delay)
+		var timer_ref := _release_timer
+		await timer_ref.timeout
+		# Only release if no other bodies have re-entered and this is the active timer.
+		if _release_timer == timer_ref and _bodies_on == 0 and _pressed:
+			_set_pressed(false)
 
 
 func _set_pressed(value: bool) -> void:

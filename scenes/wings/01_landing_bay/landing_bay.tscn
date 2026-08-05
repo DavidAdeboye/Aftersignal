@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://mo6brx2grrx8"]
+[gd_scene format=3 uid="uid://mo6brx2grrx8"]
 
 [ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/rooms/hall_end_node.tscn" id="1_afur4"]
 [ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/rooms/storage_room_node.tscn" id="1_t2lcc"]
@@ -9,30 +9,42 @@
 [ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/props/meshes/props_computer_small_mesh.tscn" id="6_l5vh2"]
 [ext_resource type="Script" uid="uid://b4vdbxhtwsg5l" path="res://scripts/test_log.gd" id="9_testlog"]
 [ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/props/meshes/props_computer_mesh.tscn" id="10_logmesh"]
-[ext_resource type="Script" uid="uid://csignaljam00001" path="res://scripts/signal_jammer.gd" id="11_jammer"]
-[ext_resource type="Script" uid="uid://cpressplate00001" path="res://scripts/pressure_plate.gd" id="12_plate"]
+[ext_resource type="Script" uid="uid://ctflgqjowqlme" path="res://scripts/signal_jammer.gd" id="11_jammer"]
+[ext_resource type="Script" uid="uid://dw86xjg2uq6ci" path="res://scripts/pressure_plate.gd" id="12_plate"]
+[ext_resource type="PackedScene" path="res://addons/quaternius-modular-scifi-pack/rooms/science_lab_map.tscn" id="12_r4ned"]
+[ext_resource type="Script" uid="uid://c2c6bf3ksaga3" path="res://scripts/locked_door.gd" id="13_lockd"]
+[ext_resource type="Script" uid="uid://dm545tolbww8u" path="res://scripts/lever.gd" id="14_lever"]
+[ext_resource type="Script" uid="uid://sjvhd330lgff" path="res://scripts/pickup_item.gd" id="15_pickup"]
+[ext_resource type="PackedScene" uid="uid://bdrone001" path="res://scenes/shared/drone.tscn" id="16_drone"]
+[ext_resource type="Script" path="res://scripts/crew_roster.gd" id="17_roster"]
+[ext_resource type="Script" path="res://scripts/missing_room_gap.gd" id="18_gap"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_6pmnr"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_torch_pickup"]
+albedo_color = Color(0.2, 0.6, 0.95, 1)
+metallic = 0.8
+roughness = 0.2
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_l5vh2"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_torch_pickup"]
+material = SubResource("StandardMaterial3D_torch_pickup")
+radius = 0.08
+height = 0.35
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_logsh"]
-size = Vector3(1, 1, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_disruptor_pickup"]
+albedo_color = Color(0.9, 0.3, 0.15, 1)
+metallic = 0.5
+roughness = 0.4
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_plate"]
-size = Vector3(1.2, 0.15, 1.2)
+[sub_resource type="BoxMesh" id="BoxMesh_disruptor_pickup"]
+material = SubResource("StandardMaterial3D_disruptor_pickup")
+size = Vector3(0.15, 0.15, 0.4)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_platedet"]
-size = Vector3(1.2, 1.6, 1.2)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_scanner_pickup"]
+albedo_color = Color(0.08, 0.4, 0.18, 1)
+roughness = 0.7
 
-[sub_resource type="BoxMesh" id="BoxMesh_plate"]
-size = Vector3(1.2, 0.15, 1.2)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_plate"]
-albedo_color = Color(0.9, 0.65, 0.2, 1)
-emission_enabled = true
-emission = Color(0.9, 0.55, 0.15, 1)
-emission_energy_multiplier = 0.4
+[sub_resource type="BoxMesh" id="BoxMesh_scanner_pickup"]
+material = SubResource("StandardMaterial3D_scanner_pickup")
+size = Vector3(0.25, 0.2, 0.05)
 
 [sub_resource type="Environment" id="Environment_amber"]
 background_mode = 1
@@ -44,16 +56,70 @@ fog_enabled = true
 fog_light_color = Color(0.4, 0.5, 0.65, 1)
 fog_density = 0.02
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_6pmnr"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_logsh"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_l5vh2"]
+size = Vector3(0.79577637, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_plate"]
+size = Vector3(1.2, 0.15, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_plate"]
+albedo_color = Color(0.9, 0.65, 0.2, 1)
+emission_enabled = true
+emission = Color(0.9, 0.55, 0.15, 1)
+emission_energy_multiplier = 0.4
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_plate"]
+size = Vector3(1.2, 0.15, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_platedet"]
+size = Vector3(1.2, 1.6, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_keycard"]
+albedo_color = Color(0.2, 0.7, 1, 1)
+emission_enabled = true
+emission = Color(0.15, 0.6, 1, 1)
+emission_energy_multiplier = 0.8
+
 [node name="LandingBay" type="Node3D" unique_id=1747541882]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=990001001]
 environment = SubResource("Environment_amber")
 
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=990001002]
+transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 10, 0)
+light_energy = 0.6
+light_indirect_energy = 0.5
+shadow_enabled = true
+
+[node name="OmniLight3D_Entry" type="OmniLight3D" parent="." unique_id=990001003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 13)
+light_color = Color(0.9, 0.95, 1, 1)
+light_energy = 1.2
+omni_range = 8.0
+omni_attenuation = 2.0
+
+[node name="OmniLight3D_Hall" type="OmniLight3D" parent="." unique_id=990001004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -10)
+light_color = Color(0.85, 0.9, 1, 1)
+omni_range = 12.0
+omni_attenuation = 1.8
+
+[node name="OmniLight3D_HallEnd" type="OmniLight3D" parent="." unique_id=990001005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0050296783, 2.708418, -20.067717)
+light_color = Color(0.95, 0.8, 0.7, 1)
+light_energy = 0.8
+omni_range = 6.0
+omni_attenuation = 2.0
+
 [node name="HallEnd" parent="." unique_id=384589159 instance=ExtResource("1_afur4")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0050296783, 0.20841789, -20.067717)
 
 [node name="StorageRoom" parent="." unique_id=143509229 instance=ExtResource("1_t2lcc")]
-transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 1, -0.050872803, 0, -0.028442383)
+transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 1, -0.045843124, 0.20841789, -0.09615898)
 
 [node name="Players" type="Node3D" parent="." unique_id=525854723]
 
@@ -64,10 +130,33 @@ spawn_path = NodePath("../Players")
 [node name="Hall" parent="." unique_id=731333220 instance=ExtResource("2_n6g7w")]
 transform = Transform3D(-0.009143507, -4.3709562e-08, -0.9999582, 4.3709562e-08, 1, -4.411106e-08, 0.9999582, -4.411106e-08, -0.009143507, 0.045137405, 0, -10.007208)
 
+[node name="DoorDoubleLongWallSideAMesh" parent="Hall/Walls" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 9.15934e-16, 0, 8.881784e-16, 1, -0.067759514, 0.2084179, -2.0044105)
+
+[node name="WallEmpty" parent="Hall/Walls" index="2"]
+transform = Transform3D(1, 0, 0, 0, 1, 9.15934e-16, 0, 8.881784e-16, 1, -4.0677595, 0.2084179, -2.0044103)
+
+[node name="WallEmpty2" parent="Hall/Walls" index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 9.15934e-16, 0, 8.881784e-16, 1, -8.067758, 0.20841789, -2.0044105)
+
+[node name="WallEmpty3" parent="Hall/Walls" index="4"]
+transform = Transform3D(1, 0, 0, 0, 1, 9.15934e-16, 0, 8.881784e-16, 1, 3.932241, 0.2084179, -2.0044103)
+
+[node name="WallEmpty4" parent="Hall/Walls" index="5"]
+transform = Transform3D(1, 0, 0, 0, 1, 9.15934e-16, 0, 8.881784e-16, 1, 7.9322414, 0.20841789, -2.0044105)
+
+[node name="RoofTileLight12" parent="Hall/Ceiling" index="11"]
+transform = Transform3D(1, 0, 0, 0, -1, 8.742279e-08, 0, -8.742279e-08, -1, -7.0677595, 4.2084184, -1.0044104)
+
+[node name="RoofTileEmpty4" parent="Hall/Ceiling" index="15"]
+transform = Transform3D(1, 0, 0, 0, -1, 8.742279e-08, 0, -8.742279e-08, -1, -9.0677595, 4.208418, -1.0044105)
+
+[node name="DoorDouble2" parent="Hall/Doors" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 9.15934e-16, 0, 8.881784e-16, 1, -0.067759514, 0.2084179, -3.0044103)
+
 [node name="CodeDisplay" type="StaticBody3D" parent="." unique_id=1730988824]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0.5, 12.6)
 script = ExtResource("4_jgmub")
-code = "4471"
 label = "STORAGE DOOR ACCESS CODE"
 prompt_text = "Press E to read access panel"
 
@@ -80,9 +169,9 @@ shape = SubResource("BoxShape3D_6pmnr")
 [node name="CrewLog" type="StaticBody3D" parent="." unique_id=1730988825]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.6, 13.5)
 script = ExtResource("9_testlog")
+prompt_text = "Press E to play audio log"
 message = "AUDIO LOG — Dr. Vance, Day 47:
 \"We keypad-locked the storage wing after the incident. Access code's posted at the far terminal — 4471. If you're hearing this and you're not crew... turn back. It isn't dormant anymore.\""
-prompt_text = "Press E to play audio log"
 
 [node name="PropsComputerMesh" parent="CrewLog" unique_id=1730988826 instance=ExtResource("10_logmesh")]
 
@@ -92,7 +181,6 @@ shape = SubResource("BoxShape3D_logsh")
 [node name="Keypad" type="StaticBody3D" parent="." unique_id=664626627]
 transform = Transform3D(-0.99731094, 0, -0.07328567, 0, 1, 0, 0.07328567, 0, -0.99731094, -2.3658795, 0, -10.58009)
 script = ExtResource("6_1chmp")
-correct_code = "4471"
 door_path = NodePath("../Hall/Doors/DoorDouble1")
 prompt_text = "Press E to enter door code"
 
@@ -110,42 +198,265 @@ radius = 7.0
 jam_strength = 0.85
 
 [node name="PressurePlateA" type="StaticBody3D" parent="." unique_id=1900000010]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.08, 11.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.08, 11)
 script = ExtResource("12_plate")
 group_id = "storage_plates"
 door_path = NodePath("../Hall/Doors/DoorDouble2")
 prompt_text = ""
 
 [node name="Mesh" type="MeshInstance3D" parent="PressurePlateA" unique_id=1900000011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0050296783, 0.20841788, -0.0677166)
 mesh = SubResource("BoxMesh_plate")
 surface_material_override/0 = SubResource("StandardMaterial3D_plate")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PressurePlateA" unique_id=1900000012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0050296783, 0.20841788, -0.0677166)
 shape = SubResource("BoxShape3D_plate")
 
 [node name="Detector" type="Area3D" parent="PressurePlateA" unique_id=1900000013]
 
 [node name="DetShape" type="CollisionShape3D" parent="PressurePlateA/Detector" unique_id=1900000014]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0050296783, 1.0084178, -0.0677166)
 shape = SubResource("BoxShape3D_platedet")
 
 [node name="PressurePlateB" type="StaticBody3D" parent="." unique_id=1900000020]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, -22.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, -22)
 script = ExtResource("12_plate")
 group_id = "storage_plates"
 prompt_text = ""
 
 [node name="Mesh" type="MeshInstance3D" parent="PressurePlateB" unique_id=1900000021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0050296783, 0.20841788, -0.0677166)
 mesh = SubResource("BoxMesh_plate")
 surface_material_override/0 = SubResource("StandardMaterial3D_plate")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PressurePlateB" unique_id=1900000022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0050296783, 0.20841788, -0.0677166)
 shape = SubResource("BoxShape3D_plate")
 
 [node name="Detector" type="Area3D" parent="PressurePlateB" unique_id=1900000023]
 
 [node name="DetShape" type="CollisionShape3D" parent="PressurePlateB/Detector" unique_id=1900000024]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0050296783, 1.0084178, -0.0677166)
 shape = SubResource("BoxShape3D_platedet")
 
+[node name="Hall2" parent="." unique_id=731333221 instance=ExtResource("2_n6g7w")]
+transform = Transform3D(0.009143507, 4.3709562e-08, 0.9999582, -4.3709562e-08, 1, 4.411106e-08, -0.9999582, -4.411106e-08, 0.009143507, -0.045137405, 0, 10.007208)
+
+[node name="DoorDouble1" parent="Hall2/Doors" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, -9.15934e-16, 0, -8.881784e-16, 1, 0.06776047, 0.20841788, 3.0044103)
+
+[node name="ResearchTerminal" type="StaticBody3D" parent="." unique_id=1730988828]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -18, 0.6, -8)
+script = ExtResource("4_jgmub")
+code = "THETA-7"
+label = "RESEARCH SEQUENCE CODE"
+prompt_text = "Press E to access terminal"
+
+[node name="SequencePuzzle" type="StaticBody3D" parent="." unique_id=1730988831]
+transform = Transform3D(-0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, -0.707107, -22, 0.6, -12)
+script = ExtResource("6_1chmp")
+correct_code = "THETA-7"
+door_path = NodePath("../Hall2/Doors/DoorDouble1")
+prompt_text = "Press E to enter sequence code"
+
+[node name="LabLog" type="StaticBody3D" parent="." unique_id=1730988834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0.6, -14)
+script = ExtResource("9_testlog")
+prompt_text = "Press E to read research log"
+message = "RESEARCH LOG — Dr. Hayes, Day 89:
+\"The crystalline samples respond to specific electromagnetic sequences. We've isolated pattern THETA-7 as the primary unlock frequency. Keep this secure — unauthorized access could destabilize the entire containment grid.\""
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LabLog" unique_id=1730988836]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21410847, 0, 0)
+shape = SubResource("BoxShape3D_logsh")
+
+[node name="PressurePlateC" type="StaticBody3D" parent="." unique_id=1900000030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.08, -6)
+script = ExtResource("12_plate")
+group_id = "lab_plates"
+door_path = NodePath("../Hall2/Doors/DoorDouble2")
+prompt_text = ""
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PressurePlateC" unique_id=1900000032]
+shape = SubResource("BoxShape3D_plate")
+
+[node name="Detector" type="Area3D" parent="PressurePlateC" unique_id=1900000033]
+
+[node name="PressurePlateD" type="StaticBody3D" parent="." unique_id=1900000040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0.08, -16)
+script = ExtResource("12_plate")
+group_id = "lab_plates"
+prompt_text = ""
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PressurePlateD" unique_id=1900000042]
+shape = SubResource("BoxShape3D_plate")
+
+[node name="Detector" type="Area3D" parent="PressurePlateD" unique_id=1900000043]
+
+[node name="SignalJammer2" type="Node3D" parent="." unique_id=1900000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -10)
+script = ExtResource("11_jammer")
+radius = 8.0
+jam_strength = 0.75
+
+[node name="CrystalSample" type="StaticBody3D" parent="." unique_id=1730988837]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0.8, -12)
+script = ExtResource("9_testlog")
+prompt_text = "Press E to examine sample"
+message = "SAMPLE ANALYSIS — CRYSTALLINE STRUCTURE:
+A translucent crystalline structure pulsing with faint bioluminescence. The sample emits a low-frequency hum that resonates through your suit — and jams your radio while you stand near it."
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CrystalSample" unique_id=1730988839]
+shape = SubResource("BoxShape3D_6pmnr")
+
+[node name="ScienceLab" parent="." unique_id=85983770 instance=ExtResource("12_r4ned")]
+transform = Transform3D(-0.013416622, 0, -0.99990994, 0, 1, 0, 0.99990994, 0, -0.013416622, -17.72, 0, -10.418)
+
+[node name="LockedDoorHallEnd" type="StaticBody3D" parent="." unique_id=2000000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.05, -20)
+script = ExtResource("13_lockd")
+required_item = "hallend_keycard"
+key_display_name = "Hall End Keycard"
+door_path = NodePath("../HallEnd/DoorDouble")
+prompt_text = "Press E to override terminal lock"
+
+[node name="ConsoleMesh" parent="LockedDoorHallEnd" unique_id=2000000009 instance=ExtResource("6_l5vh2")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LockedDoorHallEnd" unique_id=2000000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -0.15)
+shape = SubResource("BoxShape3D_l5vh2")
+
+[node name="KeycardPickup" type="StaticBody3D" parent="." unique_id=2000000003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.1313237, -14.2)
+script = ExtResource("15_pickup")
+item_name = "Hall End Keycard"
+item_id = "hallend_keycard"
+prompt_text = "Press E to pick up keycard"
+
+[node name="Mesh" type="MeshInstance3D" parent="KeycardPickup" unique_id=2000000007]
+transform = Transform3D(0.2, 0, 0, 0, 0.02, 0, 0, 0, 0.3, 0, 0, 0)
+mesh = SubResource("BoxMesh_plate")
+surface_material_override/0 = SubResource("StandardMaterial3D_keycard")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="KeycardPickup" unique_id=2000000004]
+transform = Transform3D(0.3, 0, 0, 0, 0.1, 0, 0, 0, 0.4, 0, 0, 0)
+shape = SubResource("BoxShape3D_6pmnr")
+
+[node name="LabLever" type="StaticBody3D" parent="." unique_id=2000000005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.2, 0.05, -10.3)
+script = ExtResource("14_lever")
+door_path = NodePath("../HallEnd/DoorDouble")
+stays_on = false
+reset_delay = 8.0
+prompt_text = "Press E to activate override console"
+
+[node name="ConsoleMesh" parent="LabLever" unique_id=2000000008 instance=ExtResource("6_l5vh2")]
+transform = Transform3D(-0.99574834, 0, 0.0921152, 0, 1, 0, -0.0921152, 0, -0.99574834, 0.99218965, -0.009961605, 0.98939675)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LabLever" unique_id=2000000006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4268389, 0.6, 1.0090748)
+shape = SubResource("BoxShape3D_l5vh2")
+
+[node name="WeldingTorchPickup" type="StaticBody3D" parent="." unique_id=2000000100]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 11)
+script = ExtResource("15_pickup")
+item_name = "Welding Torch"
+item_id = "welding_torch"
+prompt_text = "Press E to pick up Welding Torch"
+
+[node name="Mesh" type="MeshInstance3D" parent="WeldingTorchPickup" unique_id=2000000101]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("CylinderMesh_torch_pickup")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WeldingTorchPickup" unique_id=2000000102]
+shape = SubResource("BoxShape3D_6pmnr")
+
+[node name="SignalDisruptorPickup" type="StaticBody3D" parent="." unique_id=2000000110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.3, 9)
+script = ExtResource("15_pickup")
+item_name = "Signal Disruptor"
+item_id = "signal_disruptor"
+prompt_text = "Press E to pick up Signal Disruptor"
+
+[node name="Mesh" type="MeshInstance3D" parent="SignalDisruptorPickup" unique_id=2000000111]
+mesh = SubResource("BoxMesh_disruptor_pickup")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SignalDisruptorPickup" unique_id=2000000112]
+shape = SubResource("BoxShape3D_6pmnr")
+
+[node name="ScannerAttachmentPickup" type="StaticBody3D" parent="." unique_id=2000000120]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.3, 9)
+script = ExtResource("15_pickup")
+item_name = "Scanner Attachment"
+item_id = "scanner_attachment"
+prompt_text = "Press E to pick up Scanner Attachment"
+
+[node name="Mesh" type="MeshInstance3D" parent="ScannerAttachmentPickup" unique_id=2000000121]
+mesh = SubResource("BoxMesh_scanner_pickup")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ScannerAttachmentPickup" unique_id=2000000122]
+shape = SubResource("BoxShape3D_6pmnr")
+
+[node name="DronePath1" type="Node3D" parent="." unique_id=2000000200]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="WP1" type="Marker3D" parent="DronePath1" unique_id=2000000201]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -5)
+
+[node name="WP2" type="Marker3D" parent="DronePath1" unique_id=2000000202]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -18)
+
+[node name="WP3" type="Marker3D" parent="DronePath1" unique_id=2000000203]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.2, -18)
+
+[node name="WP4" type="Marker3D" parent="DronePath1" unique_id=2000000204]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.2, -5)
+
+[node name="PatrolDrone1" parent="." unique_id=2000000205 instance=ExtResource("16_drone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -5)
+patrol_path_node = NodePath("DronePath1")
+
+[node name="DronePath2" type="Node3D" parent="." unique_id=2000000210]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="WP1" type="Marker3D" parent="DronePath2" unique_id=2000000211]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1.2, -10)
+
+[node name="WP2" type="Marker3D" parent="DronePath2" unique_id=2000000212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1.2, -10)
+
+[node name="WP3" type="Marker3D" parent="DronePath2" unique_id=2000000213]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1.2, -16)
+
+[node name="WP4" type="Marker3D" parent="DronePath2" unique_id=2000000214]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1.2, -16)
+
+[node name="PatrolDrone2" parent="." unique_id=2000000215 instance=ExtResource("16_drone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1.2, -10)
+patrol_path_node = NodePath("DronePath2")
+
+[node name="CrewRosterTerminal" parent="." unique_id=2000000301 instance=ExtResource("10_logmesh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0.2, 11.5)
+script = ExtResource("17_roster")
+
+[node name="MissingRoomGap" parent="." unique_id=2000000302 instance=ExtResource("10_logmesh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 0.2, 4.5)
+script = ExtResource("18_gap")
+
+[node name="DrFarrowLog1" parent="." unique_id=2000000303 instance=ExtResource("10_logmesh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.2, -2.5)
+script = ExtResource("9_testlog")
+log_title = "AUDIO LOG — Dr. Osei Farrow (Day 12: Anomaly Impulse Response)"
+message = "AUDIO LOG — Dr. Osei Farrow, Day 12:
+'The seismic reading from the sub-ice layer isn't a passive resonance. When we pulsed the lower transmitter at 440 Hz, the signal frequency shifted to match us within milliseconds. It's not echoing us. It's listening. I've requested permission to deepen the drill bore.'"
+
+[node name="DrFarrowLog2" parent="." unique_id=2000000304 instance=ExtResource("10_logmesh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 0.2, -7.5)
+script = ExtResource("9_testlog")
+log_title = "RESEARCH MEMO — Dr. Osei Farrow (Day 28: Organic Stimulus)"
+message = "RESEARCH MEMO — Dr. Osei Farrow, Day 28:
+'Spectrometry confirms the crystal structure is organic-silicate, but its growth rate correlates directly with human activity in Wing 1. When the night shift sleeps, growth stalls. When we're active, it expands toward the thermal conduits. It wants proximity.'"
+
 [editable path="Hall"]
+[editable path="Hall2"]

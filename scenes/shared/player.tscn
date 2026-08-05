@@ -1,7 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://drdhp85cl2kba"]
+[gd_scene format=3 uid="uid://drdhp85cl2kba"]
 
 [ext_resource type="Script" uid="uid://cvhecb8ctvr77" path="res://scripts/player_controller.gd" id="1_4flbx"]
-[ext_resource type="Script" uid="uid://cg1yphpad00001" path="res://scripts/glyph_pad.gd" id="2_glyph"]
+[ext_resource type="Script" uid="uid://bl76amsla6emi" path="res://scripts/glyph_pad.gd" id="2_glyph"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6pmnr"]
 radius = 0.4
@@ -23,9 +23,11 @@ properties/1/spawn = true
 properties/1/replication_mode = 1
 
 [node name="Player" type="CharacterBody3D" unique_id=989136199]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1312663, 0)
 script = ExtResource("1_4flbx")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=907938524]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.015354037, 0)
 shape = SubResource("CapsuleShape3D_6pmnr")
 
 [node name="Head" type="Node3D" parent="." unique_id=1837085441]
@@ -116,6 +118,7 @@ autowrap_mode = 2
 
 [node name="GlyphPad" type="Control" parent="CanvasLayer" unique_id=1841002560]
 visible = false
+layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5

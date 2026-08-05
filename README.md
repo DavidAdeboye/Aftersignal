@@ -21,9 +21,9 @@ Built as part of [Hack Club's Stardance](https://stardance.hackclub.com).
 
 ## Premise
 
-Twelve years ago, the Halcyon Institute built a research outpost on Kessler-9, drawn there by an anomalous signature buried beneath the ice. Six years in, all contact was lost — no distress call, no wreckage. You and your partner are contracted salvagers sent to recover data and equipment before a rival crew arrives. You didn't sign up for a mystery. That changes fast.
+Two salvagers sent to strip a dead research station for parts uncover a twelve-year-old cover-up, a crew that didn't just disappear — they were *replaced*, one by one — and a thing under the ice that has been quietly rehearsing how to be human. By the time they realize the moon isn't the anomaly, it's the *containment*, they have to decide whether to finish what the crew started, undo it, or become the next entry in the log.
 
-The story is told entirely through environmental storytelling — audio logs, terminal entries, physical evidence, and environmental change — with no cutscenes or forced dialogue. Each player usually finds different fragments of the same story, mirroring the game's core communication mechanic at a narrative level.
+The story is told entirely through divergent environmental storytelling — audio logs, terminal entries, physical evidence, and environmental change — with no cutscenes or forced dialogue. Each player usually finds different fragments of the same story, reinforcing that the timeline can only be pieced together by players comparing notes.
 
 ## Core Loop
 
@@ -43,15 +43,14 @@ The mechanic everything else is built around:
 
 ## World Structure
 
-The station is divided into five self-contained wings, each with its own aesthetic, story chapter, and puzzle mechanics:
+The station is divided into six self-contained wings, each with its own aesthetic, story chapter, and puzzle mechanics:
 
-1. **Landing Bay & Habitation Wing** *(tutorial)* — movement, radio, basic puzzle-sharing
-2. **Research Labs** — glyph/symbol system, first simultaneous-action puzzle
-3. **Reactor & Power Wing** — cross-wing environmental sync puzzles
-4. **Deep Excavation Site** — radio interference mechanic, story accelerates
-5. **The Core** *(finale)* — players reunite in person for the ending choice
-
-Wings 4–5 are stretch goals; the game is considered complete and shippable even if it ends after Wing 3.
+1. **Landing Bay & Habitation Wing** *(tutorial)* — movement, radio, basic puzzle-sharing, setup of the eleven-vs-twelve crew roster anomaly.
+2. **Research Labs** — glyph/symbol system, early testing logs, first simultaneous-action puzzles.
+3. **Reactor & Power Wing** — cross-wing environmental sync puzzles, introduction of corrupted drone hazard.
+4. **Deep Excavation Site** — radio interference mechanic, black-box flight recorder reconstruction puzzle.
+5. **The Core** *(finale)* — players physically reunite, concluding with a wave-based defense climax and choice of ending.
+6. **Aftersignal** *(epilogue)* — a brief post-credits epilogue scene playing out the consequences of the ending.
 
 ## Tech Stack
 
@@ -82,8 +81,8 @@ Aftersignal/
 ## Scope Guardrails
 
 - Exactly 2 players, always — no matchmaking or lobbies beyond a room code/invite link
-- 5 wings max, unless earlier ones finish ahead of schedule
-- No combat, ever
+- 6 wings total (Acts 1-5 + Epilogue)
+- Utility-based combat only — no traditional guns; players use repurposed tools (welding torch, disruptor) and coordinate weak-point scanning
 - No character customization
 - Reuse a small, consistent asset library rather than a large inconsistent one
 
@@ -94,3 +93,4 @@ Aftersignal/
 ## License
 
 TBD
+

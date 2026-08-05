@@ -30,6 +30,15 @@ func _ready() -> void:
 	# Fill the pad area and draw a faint frame so it reads as a device screen.
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
+	var clear_btn := Button.new()
+	clear_btn.text = "Clear Canvas"
+	clear_btn.position = Vector2(200, 280)
+	clear_btn.size = Vector2(110, 30)
+	clear_btn.pressed.connect(func():
+		NetworkManager.clear_glyphs.rpc()
+	)
+	add_child(clear_btn)
+
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:

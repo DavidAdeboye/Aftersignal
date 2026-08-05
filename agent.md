@@ -17,33 +17,31 @@
 
 ## 2. Premise / Story
 
-### 2.1 Setup
+### 2.1 Setup & Logline
+Two salvagers sent to strip a dead research station for parts uncover a twelve-year-old cover-up, a crew that didn't just disappear — they were *replaced*, one by one — and a thing under the ice that has been quietly rehearsing how to be human. By the time they realize the moon isn't the anomaly, it's the *containment*, they have to decide whether to finish what the crew started, undo it, or become the next entry in the log.
 
-Twelve years ago, the *Halcyon Institute* established a remote research outpost on Moon designation **Kessler-9**, drawn there by an anomalous energy signature buried beneath the ice. The station studied the signature for six years before all contact was lost. No distress call. No wreckage. The station simply went silent mid-transmission.
+### 2.2 Narrative Structure (Act Breakdown)
+The game's story is told through divergent environmental storytelling (audio logs, text files, and physical evidence) split asymmetrically between the two players.
 
-You and your partner are contracted salvagers — not scientists, not soldiers — sent to recover data and equipment before a rival company's crew arrives. You didn't sign up for a mystery. You signed up for a paycheck. That changes fast.
+* **Act 1 — Arrival (Landing Bay & Habitation Wing):** Players land and get separated by a shuttle system glitch. 
+  * *Twist Seed:* Player A finds a crew roster listing twelve names and photos. Player B, exploring mess quarters, finds personal quarters/effects for only eleven people. One scientist's presence was completely erased or never existed.
+* **Act 2 — Research Labs:** Introduces early anomaly testing.
+  * *Story Beats:* Audio logs reveal the anomaly responds to human stimuli. Dr. Osei Farrow becomes obsessed. A whistleblower, Callum Bray, tries to warn corporate and vanishes.
+  * *Twist Seed:* The glyph code players use to communicate sketch messages was found already carved into ice core samples predating the station.
+* **Act 3 — Reactor & Power Wing:** Power rerouting issues.
+  * *Story Beats:* Logs show the station automatically restored power to the excavation site whenever the crew tried to cut it. Black-box flight recorder fragments suggest a deliberate power surge was fired from the command deck the night of the blackout. First threat encountered: a corrupted maintenance drone patrolling the corridors.
+* **Act 4 — Deep Excavation Site:** Signal static-heavy crystal tunnels.
+  * *Major Reveal:* The twelfth crew member was never a real human, but a construct created by the anomaly modeled from the other crew members' behavior to walk among them.
+  * *The Big Twist:* The reconstructed black-box log reveals Dr. Farrow initiated the power surge as a mercy-kill attempt to destroy the construct, Stranding the crew.
+* **Act 5 — The Core (Finale):** Players physically reunite.
+  * *The Construct:* Encounter the entity directly, speaking in a stitched composite of the crew's voices.
+  * *Final Climactic Battle:* Wave-based co-op defense against corrupted drones while executing the dialog/puzzle to choose the ending (Awaken / Seal / Communicate).
+* **Epilogue Wing — Aftersignal (New):** A short post-credits sequence showing the consequences of the ending selected in Act 5.
 
-### 2.2 The Hook
-
-Within minutes of landing, your shuttle's systems glitch and the two of you are separated — different airlocks, different wings of the station. Communication is spotty at best. As you explore, you start finding personal logs, terminal entries, and physical evidence left behind by the twelve-person research crew, painting a picture of a team that made an incredible discovery... and then made increasingly disturbing choices in response to it.
-
-The "signature" the station was built to study isn't a mineral or an energy source. It's the moon reacting to something ancient buried at its core — and the deeper the crew dug, the more the moon began to respond back.
-
-### 2.3 Structure
-
-The story is told entirely through **environmental storytelling** — no cutscenes, no forced dialogue. Players piece together the timeline from:
-- Audio logs (personal recordings from crew members)
-- Terminal text logs and emails
-- Physical evidence (arranged rooms, abandoned personal effects, handwritten notes)
-- Environmental changes (crystal growth patterns that map to the station's timeline — areas closer to "the end" are more overgrown)
-
-Each player often finds *different* fragments of the same story, meaning neither player has the full picture alone — mirroring the game's core communication mechanic at a narrative level.
-
-### 2.4 Ending (subject to change during development)
-
-There is no combat, no "villain." The ending is a choice: players can choose to fully awaken the signature (opening the way for the moon's process to continue, for better or worse), seal it permanently, or attempt to communicate with it. Each ending recontextualizes what players read throughout the game — an intentionally ambiguous, "what did we actually just do" note to end on.
-
-*(This is a placeholder ending structure — refine once the middle of the game is built and you know what tone actually landed.)*
+### 2.3 Key Characters
+* **Dr. Osei Farrow:** Lead researcher, obsessive, sympathetic; initiator of the black-box blackout.
+* **Callum Bray:** Whistleblower researcher, first to be absorbed by the anomaly.
+* **The Construct ("Twelve"):** The composite entity born from the anomaly, speaking with combined crew voices.
 
 ---
 
@@ -89,15 +87,14 @@ This is the heart of the game — the mechanic everything else is built around.
 
 ## 6. World / Level Structure
 
-The station is divided into **wings**, each a self-contained puzzle sequence with its own aesthetic and story chapter. This structure keeps development scoped — you build and polish one wing at a time rather than one sprawling open space.
+The station is divided into **wings**, each a self-contained puzzle sequence with its own aesthetic and story chapter.
 
-1. **Landing Bay & Habitation Wing** (Tutorial) — learn movement, radio communication, and basic puzzle-sharing. Introduces the crew through personal quarters.
-2. **Research Labs** — the crew's early discoveries. Introduces the glyph/symbol system. First simultaneous-action puzzle.
-3. **Reactor & Power Wing** — introduces cross-wing environmental sync puzzles (what one player does changes the other's space).
-4. **Deep Excavation Site** — the crystal growth is dense here; radio interference mechanic is central. Story reveals accelerate.
-5. **The Core** (Finale) — smaller, more intimate space where both players are finally reunited in person for the ending choice.
-
-Each wing should be buildable and playable **independently**, which is ideal for solo development — you can finish and polish Wing 1 completely before starting Wing 2, giving you constant shippable milestones.
+1. **Landing Bay & Habitation Wing** (Act 1 Tutorial) — Learn movement, controller inputs, radio communication, and basic puzzle-sharing. Sets up the eleven-vs-twelve crew discrepancy.
+2. **Research Labs** (Act 2) — Introduces the core glyph/symbol system and first simultaneous-action puzzles. Logs detail initial anomaly response.
+3. **Reactor & Power Wing** (Act 3) — Cross-wing environmental sync puzzles. Introduces the first corrupted maintenance drone patrol (utility-based combat).
+4. **Deep Excavation Site** (Act 4) — Dense crystal growths; radio signal degradation is central. Reconstruct the flight black-box showing Dr. Farrow's blackout trigger.
+5. **The Core** (Act 5 Finale) — Players physically reunite to face the entity. Features a co-op puzzle-under-pressure boss climax defending the Core from drone waves while deciding the ending.
+6. **Aftersignal** (Epilogue) — A short epilogue showing the distinct consequences of the chosen Act 5 ending.
 
 ---
 
@@ -140,28 +137,25 @@ Each wing should be buildable and playable **independently**, which is ideal for
 Since this project is meant to run all summer without becoming unmanageable, some explicit limits:
 
 - **Exactly 2 players, always.** No matchmaking, no lobbies beyond a simple room code/invite link.
-- **5 wings, not more**, unless the first few are finished early and you genuinely want to expand.
-- **No combat systems, ever.** Keeps scope and animation needs low.
-- **No character customization** — players are simple, functional character models (or even just a floating radio/light with a nametag, if modeling humans proves too time-consuming).
+- **6 wings total (Acts 1-5 + Epilogue).**
+- **Utility-based combat systems only.** No traditional gunplay or power-fantasy weapons. Players defend themselves using repurposed salvager tools (welding torch, signal disruptor) and coordinate via scanner information.
+- **No character customization** — players are simple, functional character models.
 - **Reuse assets aggressively.** A consistent, smaller asset library beats a huge, inconsistent one.
 
 ---
 
 ## 10. Milestone Roadmap (Loose)
 
-| Phase | Goal | Rough Timeframe |
-|---|---|---|
-| 0 | Learn Godot basics (official tutorial) | Week 1 |
-| 1 | Single room, walking character, basic lighting | Week 1–2 |
-| 2 | Two players connected, see each other move | Week 2–3 |
-| 3 | Radio/proximity chat working | Week 3–4 |
-| 4 | Wing 1 (tutorial wing) fully playable start to finish | Week 4–5 |
-| 5 | Persistence system (save progress between sessions) | Week 5–6 |
-| 6 | Wing 2 puzzles (glyph system introduced) | Week 6–7 |
-| 7 | Wing 3 (cross-wing environmental sync puzzles) | Week 7–8 |
-| 8 | Polish, sound design, playtesting with a friend | Week 8–9 |
-
-Wings 4–5 (Deep Excavation, The Core) are stretch goals — great to have if the pacing above goes smoothly, but the game is genuinely "complete and shippable" even if it ends after Wing 3, since each wing is a self-contained chapter.
+| Phase | Goal |
+|---|---|
+| 0 | Project setup, networking & radio/proximity chat basics (Completed) |
+| 1 | Wing 1 (Landing Bay) fully playable with keypad, pressure plates, locked doors, and consoles (Completed) |
+| 2 | Drone AI pathfinding & welding torch/disruptor combat tools prototype |
+| 3 | Wing 2 (Research Labs) puzzles, terminals, and glyph pad drawings |
+| 4 | Wing 3 (Reactor Wing) sync mechanics and drone combat integration |
+| 5 | Wing 4 (Excavation) signal jammer zones and flight recorder puzzle |
+| 6 | Wing 5 (The Core) physical reunion, waves climax, and ending dialogs |
+| 7 | Epilogue Wing (Aftersignal) & final polish pass |
 
 ---
 

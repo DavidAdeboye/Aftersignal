@@ -13,6 +13,7 @@ func _ready() -> void:
 		multiplayer.peer_connected.connect(_on_peer_connected)
 	if not multiplayer.peer_disconnected.is_connected(_on_peer_disconnected):
 		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	_setup_controller_inputs()
 
 
 func _get_players_node() -> Node3D:
@@ -135,6 +136,16 @@ func lock_door(door_path: NodePath) -> void:
 		door.opened = false
 
 
+## Player-initiated door toggle — press E on a freely openable door to flip it
+## open or closed. Unlike unlock_door / lock_door (which set absolute state for
+## puzzle-driven doors), this mirrors what the player sees and intends.
+@rpc("any_peer", "call_local")
+func toggle_door(door_path: NodePath) -> void:
+	var door = get_tree().current_scene.get_node_or_null(door_path)
+	if door and "opened" in door:
+		door.opened = not door.opened
+
+
 ## Relays a completed glyph stroke to the OTHER player's sketch pad. Same
 ## routing pattern as chat: the RPC runs on every peer, but each peer only
 ## applies it to a pad that ISN'T its own local player's — i.e. the sender sees
@@ -151,3 +162,66 @@ func clear_glyphs() -> void:
 	var local_player = _get_local_player()
 	if local_player and local_player.has_method("clear_glyph_pad"):
 		local_player.clear_glyph_pad()
+
+
+@rpc("any_peer", "call_local")
+func stun_drone(drone_path: NodePath, tool_type: String) -> void:
+	var drone = get_node_or_null(drone_path)
+	if drone and drone.has_method("stun"):
+		drone.stun(tool_type)
+
+
+@rpc("any_peer", "call_local")
+func reset_all_drones() -> void:
+	for drone in get_tree().get_nodes_in_group("drones"):
+		if drone.has_method("reset_drone"):
+			drone.reset_drone()
+
+
+# ============================================================================
+#  CONTROLLER INPUT INJECTION
+# ============================================================================
+
+func _setup_controller_inputs() -> void:
+	# Register movement axis mappings (Left stick)
+	_add_joy_axis_action("move_left", JOY_AXIS_LEFT_X, -1.0)
+	_add_joy_axis_action("move_right", JOY_AXIS_LEFT_X, 1.0)
+	_add_joy_axis_action("move_forward", JOY_AXIS_LEFT_Y, -1.0)
+	_add_joy_axis_action("move_back", JOY_AXIS_LEFT_Y, 1.0)
+	
+	# Register button actions
+	_add_joy_button_action("jump", JOY_BUTTON_A)
+	_add_joy_button_action("interact", JOY_BUTTON_X)
+	_add_joy_button_action("toggle_chat", JOY_BUTTON_Y)
+	_add_joy_button_action("toggle_glyph", JOY_BUTTON_BACK)
+	
+	# Register custom look actions for the right stick
+	var look_actions = ["look_left", "look_right", "look_up", "look_down"]
+	for action in look_actions:
+		if not InputMap.has_action(action):
+			InputMap.add_action(action)
+	
+	_add_joy_axis_action("look_left", JOY_AXIS_RIGHT_X, -1.0)
+	_add_joy_axis_action("look_right", JOY_AXIS_RIGHT_X, 1.0)
+	_add_joy_axis_action("look_up", JOY_AXIS_RIGHT_Y, -1.0)
+	_add_joy_axis_action("look_down", JOY_AXIS_RIGHT_Y, 1.0)
+
+
+func _add_joy_axis_action(action: String, axis: int, value: float) -> void:
+	var event := InputEventJoypadMotion.new()
+	event.axis = axis
+	event.axis_value = value
+	# Prevent duplicate inputs if loaded multiple times
+	for existing in InputMap.action_get_events(action):
+		if existing is InputEventJoypadMotion and existing.axis == axis and sign(existing.axis_value) == sign(value):
+			return
+	InputMap.action_add_event(action, event)
+
+
+func _add_joy_button_action(action: String, button: int) -> void:
+	var event := InputEventJoypadButton.new()
+	event.button_index = button
+	for existing in InputMap.action_get_events(action):
+		if existing is InputEventJoypadButton and existing.button_index == button:
+			return
+	InputMap.action_add_event(action, event)
