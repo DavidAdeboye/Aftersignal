@@ -19,3 +19,7 @@ Station personnel manifest lists 12 crew... but this wing was physically built f
 
 func interact(player: Node = null) -> void:
 	_notify(player, message)
+	if ObjectiveManager.instance:
+		ObjectiveManager.instance.set_objective("OBJECTIVE: Access Science Lab & Investigate Dr. Farrow's Research")
+	if DialogManager.instance:
+		DialogManager.instance.play_dialog("SALVAGER B", "Hold on... the manifest listed 12 crew, but this wall is seamless steel. Room 12 was never built! Head to Dr. Farrow's lab down the hall.")

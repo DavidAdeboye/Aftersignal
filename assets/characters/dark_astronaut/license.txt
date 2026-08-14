@@ -1,0 +1,11 @@
+Model Information:
+* title:	Dark Astronaut
+* source:	https://sketchfab.com/3d-models/dark-astronaut-1b2d325edc814d068e920add2ecc8a32
+* author:	Charles Cloutier (https://sketchfab.com/Allastar)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Dark Astronaut" (https://sketchfab.com/3d-models/dark-astronaut-1b2d325edc814d068e920add2ecc8a32) by Charles Cloutier (https://sketchfab.com/Allastar) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

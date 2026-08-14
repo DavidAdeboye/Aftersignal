@@ -13,3 +13,7 @@ func _ready() -> void:
 
 func interact(player: Node = null) -> void:
 	_notify(player, message)
+	if DialogManager.instance:
+		DialogManager.instance.play_dialog("DR. FARROW LOG", message, 6.0)
+	if ObjectiveManager.instance:
+		ObjectiveManager.instance.set_objective("OBJECTIVE: Proceed through Research Labs Airlock")

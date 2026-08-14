@@ -31,3 +31,13 @@ func _notify(player: Node, text: String) -> void:
 		player.show_message(text)
 	else:
 		print(text)
+
+
+## Returns the prompt text configured for this interactable.
+func get_prompt_text() -> String:
+	return prompt_text
+
+
+## Checks whether a non-empty message payload is configured.
+func has_message() -> bool:
+	return not message.is_empty()

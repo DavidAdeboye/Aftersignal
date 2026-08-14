@@ -23,10 +23,19 @@ var signal_quality: float = 0.0
 @onready var chat_input: LineEdit = $CanvasLayer/ChatInput
 @onready var chat_log: RichTextLabel = $CanvasLayer/ChatLog
 @onready var signal_indicator: Label = $CanvasLayer/SignalIndicator
-@onready var keypad_input: LineEdit = $CanvasLayer/KeypadInput
+@onready var keypad_input: Control = $CanvasLayer/KeypadPanel
 @onready var message_panel: PanelContainer = $CanvasLayer/MessagePanel
 @onready var message_label: Label = $CanvasLayer/MessagePanel/MessageLabel
 @onready var glyph_pad: Control = $CanvasLayer/GlyphPad
+
+var anim_player: AnimationPlayer = null
+var anim_state: String = "idle"
+var anim_speed: float = 1.0
+
+# Network interpolation targets (written by MultiplayerSynchronizer)
+var sync_position: Vector3 = Vector3.ZERO
+var sync_rotation: Vector3 = Vector3.ZERO
+const INTERP_SPEED: float = 25.0
 
 var _message_timer: SceneTreeTimer = null
 
@@ -58,47 +67,106 @@ var disruptor_cooldown: float = 0.0
 var disruptor_recharge_timer: float = 0.0
 var scanner_retention_timer: float = 0.0
 
+# Narrative Systems HUD
+var objective_banner: PanelContainer = null
+var objective_label: Label = null
+var dialog_banner: PanelContainer = null
+var dialog_label: RichTextLabel = null
+var dialog_timer: float = 0.0
+var _narrative_connected: bool = false
+
 # HUD Overlays
 var tool_indicator: Label = null
 var scanner_display: PanelContainer = null
 var scanner_label: RichTextLabel = null
 var blackout_rect: ColorRect = null
+var central_reticle: Panel = null
 
-# 3D Tool meshes & Drawers
-var tool_holder: Node3D = null
-var torch_mesh: MeshInstance3D = null
+# Reading Panel (pickup logs/notepads)
+var reading_panel: PanelContainer = null
+var reading_title_label: Label = null
+var reading_text_label: RichTextLabel = null
+var is_reading: bool = false
+
+# 3D Tool meshes & Drawers — GLB instances placed in the scene under ToolHolder / FPS Rig BoneAttachment3D
+@onready var tool_holder: Node3D = find_child("ToolHolder", true, false) as Node3D
+@onready var torch_mesh: Node3D = find_child("WeldingTorchMesh", true, false) as Node3D
+@onready var disruptor_mesh: Node3D = find_child("DisruptorMesh", true, false) as Node3D
+@onready var scanner_mesh: Node3D = find_child("ScannerMesh", true, false) as Node3D
 var torch_light: OmniLight3D = null
-var disruptor_mesh: MeshInstance3D = null
 var disruptor_light: OmniLight3D = null
-var scanner_mesh: MeshInstance3D = null
 var path_drawer: MeshInstance3D = null
 var line_material: StandardMaterial3D = null
+
+# Procedural Viewmodel Sway & Movement Bobbing
+var viewmodel_bob_cycle: float = 0.0
+var mouse_delta_x: float = 0.0
+var mouse_delta_y: float = 0.0
 
 
 func _enter_tree() -> void:
 	set_multiplayer_authority(int(str(name)))
 
-
 func _ready() -> void:
 	spawn_index = 0 if int(str(name)) == 1 else 1
 	position = spawn_points[spawn_index]
 
-	var mesh_instance: MeshInstance3D = $MeshInstance3D
-	var material := StandardMaterial3D.new()
-	material.albedo_color = spawn_colors[spawn_index]
-	mesh_instance.set_surface_override_material(0, material)
+	var astronaut_model: Node3D = get_node_or_null("AstronautModel") as Node3D
+	if astronaut_model:
+		_tint_meshes_recursive(astronaut_model, spawn_colors[spawn_index])
+
+		if is_multiplayer_authority():
+			_set_layer_recursive(astronaut_model, 2)
+			camera.set_cull_mask_value(2, false)
+
+		var anim_node: AnimationPlayer = astronaut_model.get_node_or_null("AnimationPlayer") as AnimationPlayer
+		if anim_node:
+			anim_player = anim_node
+
+			if not anim_player.has_animation_library("moves"):
+				var lib := AnimationLibrary.new()
+				var idle_anim: Animation = load("res://assets/characters/dark_astronaut/animations/idle_anim.res")
+				var run_anim: Animation = load("res://assets/characters/dark_astronaut/animations/run_anim.res")
+				print("idle_anim loaded: ", idle_anim, " | run_anim loaded: ", run_anim)
+				if idle_anim:
+					lib.add_animation("idle", idle_anim)
+				if run_anim:
+					lib.add_animation("run", run_anim)
+				anim_player.add_animation_library("moves", lib)
+
+			anim_player.play("moves/idle")
 
 	if not is_multiplayer_authority():
-		$CanvasLayer.visible = false
+		$CanvasLayer.queue_free()
 	else:
 		_setup_static_overlay()
 		_setup_inventory_hud()
 		_setup_combat_systems()
+		_setup_reading_panel()
+		_setup_message_panel_style()
 		_setup_hud_mouse_filters()
-
-	keypad_input.text_submitted.connect(_on_keypad_submitted)
+		_connect_narrative_managers()
+		keypad_input.text_submitted.connect(_on_keypad_submitted)
 
 	call_deferred("_setup_local_player")
+
+func _tint_meshes_recursive(node: Node, color: Color) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		for surface_idx in mesh_instance.get_surface_override_material_count():
+			var material := StandardMaterial3D.new()
+			material.albedo_color = color
+			mesh_instance.set_surface_override_material(surface_idx, material)
+	for child in node.get_children():
+		_tint_meshes_recursive(child, color)
+
+
+func _set_layer_recursive(node: Node, layer: int) -> void:
+	if node is VisualInstance3D:
+		(node as VisualInstance3D).set_layer_mask_value(1, false)
+		(node as VisualInstance3D).set_layer_mask_value(layer, true)
+	for child in node.get_children():
+		_set_layer_recursive(child, layer)
 
 
 func _setup_local_player() -> void:
@@ -106,7 +174,6 @@ func _setup_local_player() -> void:
 		return
 	camera.current = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-
 
 func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
@@ -122,6 +189,8 @@ func _input(event: InputEvent) -> void:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		head.rotate_x(-event.relative.y * mouse_sensitivity)
 		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-85), deg_to_rad(85))
+		mouse_delta_x += event.relative.x
+		mouse_delta_y += event.relative.y
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -129,6 +198,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if is_ko:
+		return
+
+	if is_reading:
+		if event.is_action_pressed("interact") or event.is_action_pressed("ui_cancel"):
+			_close_reading_panel()
 		return
 
 	if event.is_action_pressed("select_tool_1") and owned_tools.get("welding_torch", false):
@@ -171,6 +245,31 @@ func _unhandled_input(event: InputEvent) -> void:
 				NetworkManager.toggle_door.rpc(door.get_path())
 
 
+func _process(delta: float) -> void:
+	if not is_multiplayer_authority():
+		# Smoothly interpolate remote player position and rotation
+		global_position = global_position.lerp(sync_position, clamp(INTERP_SPEED * delta, 0.0, 1.0))
+		rotation = rotation.lerp(sync_rotation, clamp(INTERP_SPEED * delta, 0.0, 1.0))
+		_update_animation()
+		return
+
+	# Authority keeps sync vars up to date for replication
+	sync_position = global_position
+	sync_rotation = rotation
+
+	if dialog_timer > 0.0:
+		dialog_timer -= delta
+		if dialog_timer <= 0.0 and dialog_banner:
+			dialog_banner.visible = false
+
+func _update_animation() -> void:
+	if not anim_player:
+		return
+	var target := "moves/" + anim_state
+	if anim_player.current_animation != target:
+		anim_player.play(target)
+	anim_player.speed_scale = anim_speed if anim_state == "run" else 1.0
+
 func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
@@ -185,6 +284,13 @@ func _physics_process(delta: float) -> void:
 		welding_cooldown -= delta
 	if disruptor_cooldown > 0.0:
 		disruptor_cooldown -= delta
+	if dialog_timer > 0.0:
+		dialog_timer -= delta
+		if dialog_timer <= 0.0 and dialog_banner:
+			dialog_banner.visible = false
+
+	if not _narrative_connected:
+		_connect_narrative_managers()
 
 	# Passive Signal Disruptor cell/battery recharge
 	if owned_tools.get("signal_disruptor", false) and disruptor_charges < 5:
@@ -224,6 +330,17 @@ func _physics_process(delta: float) -> void:
 	_update_interactable()
 	_update_chat_range()
 
+	# Update movement animation state metrics
+	var horiz_speed := Vector2(velocity.x, velocity.z).length()
+	if horiz_speed > 0.1:
+		anim_state = "run"
+		anim_speed = horiz_speed / walk_speed
+	else:
+		anim_state = "idle"
+		anim_speed = 1.0
+		
+	_update_animation()
+
 	if global_position.y < -20:
 		global_position = spawn_points[spawn_index]
 		velocity = Vector3.ZERO
@@ -236,6 +353,55 @@ func _physics_process(delta: float) -> void:
 
 	_process_scanner(delta)
 	_draw_scanner_paths()
+	_process_viewmodel_sway(delta)
+
+
+## Procedurally calculates first-person hand & tool viewmodel bobbing while walking/running,
+## idle breathing sway, and organic mouse-look rotational lag.
+func _process_viewmodel_sway(delta: float) -> void:
+	if not tool_holder:
+		return
+		
+	var horiz_speed: float = Vector2(velocity.x, velocity.z).length()
+	var on_ground: bool = is_on_floor()
+	
+	var bob_x: float = 0.0
+	var bob_y: float = 0.0
+	var tilt_z: float = 0.0
+	
+	if on_ground and horiz_speed > 0.1:
+		# Dynamic gait bobbing scaled to movement velocity
+		var bob_frequency: float = 10.0 if horiz_speed <= walk_speed else 14.0
+		var bob_amount_x: float = 0.012
+		var bob_amount_y: float = 0.010
+		
+		viewmodel_bob_cycle += delta * bob_frequency
+		bob_x = cos(viewmodel_bob_cycle * 0.5) * bob_amount_x
+		bob_y = sin(viewmodel_bob_cycle) * bob_amount_y
+		tilt_z = sin(viewmodel_bob_cycle * 0.5) * 0.025
+	else:
+		# Gentle idle breathing sway
+		viewmodel_bob_cycle += delta * 2.0
+		bob_x = cos(viewmodel_bob_cycle * 0.5) * 0.0025
+		bob_y = sin(viewmodel_bob_cycle) * 0.0025
+		
+	# Mouse look rotational sway (viewmodel lags slightly behind mouse turn)
+	var sway_x: float = clampf(-mouse_delta_x * 0.00025, -0.025, 0.025)
+	var sway_y: float = clampf(mouse_delta_y * 0.00025, -0.025, 0.025)
+	mouse_delta_x = move_toward(mouse_delta_x, 0.0, delta * 300.0)
+	mouse_delta_y = move_toward(mouse_delta_y, 0.0, delta * 300.0)
+	
+	# Blend sway into viewmodel position & rotation
+	var target_pos: Vector3 = Vector3(bob_x + sway_x, bob_y + sway_y, 0.0)
+	var target_rot: Vector3 = Vector3(sway_y * 0.6, sway_x * 0.6, tilt_z)
+	
+	tool_holder.position = tool_holder.position.lerp(target_pos, clampf(delta * 12.0, 0.0, 1.0))
+	tool_holder.rotation.x = lerp_angle(tool_holder.rotation.x, target_rot.x, clampf(delta * 12.0, 0.0, 1.0))
+	tool_holder.rotation.y = lerp_angle(tool_holder.rotation.y, target_rot.y, clampf(delta * 12.0, 0.0, 1.0))
+	tool_holder.rotation.z = lerp_angle(tool_holder.rotation.z, target_rot.z, clampf(delta * 12.0, 0.0, 1.0))
+
+
+
 
 
 func _update_chat_range() -> void:
@@ -296,15 +462,23 @@ func _update_signal_indicator() -> void:
 
 
 func _update_interactable() -> void:
+	var can_interact := false
 	if interact_ray.is_colliding():
 		var collider = interact_ray.get_collider()
-		if collider is Interactable:
-			current_interactable = collider
+
+		# Check if the collider itself is an Interactable, or walk up the
+		# parent chain.  This handles editable-children setups where a
+		# StaticBody3D + CollisionShape3D lives deep inside a GLB mesh
+		# hierarchy — the raycast returns that child body, not the root
+		# pickup node.
+		var interactable_node: Interactable = _find_interactable_ancestor(collider)
+		if interactable_node:
+			current_interactable = interactable_node
 			current_door_body = null
-			interact_prompt.text = collider.prompt_text if collider.prompt_text != "" else "Press E to interact"
-			interact_prompt.visible = collider.prompt_text != ""
-			return
-		if collider is QuaterniusDoorBody:
+			interact_prompt.text = interactable_node.prompt_text if interactable_node.prompt_text != "" else "Press E to interact"
+			interact_prompt.visible = interactable_node.prompt_text != ""
+			can_interact = interactable_node.prompt_text != ""
+		elif collider is QuaterniusDoorBody:
 			current_door_body = collider
 			current_interactable = null
 			var door_node: Node = collider.get("door")
@@ -313,11 +487,34 @@ func _update_interactable() -> void:
 			else:
 				interact_prompt.text = "Press E to open"
 			interact_prompt.visible = true
-			return
+			can_interact = true
 
-	current_interactable = null
-	current_door_body = null
-	interact_prompt.visible = false
+	if not can_interact:
+		current_interactable = null
+		current_door_body = null
+		interact_prompt.visible = false
+
+	if central_reticle:
+		if can_interact:
+			central_reticle.modulate = Color(0.2, 0.95, 0.4) # Glowing emerald green
+			central_reticle.scale = Vector2(1.5, 1.5)
+		else:
+			central_reticle.modulate = Color(1.0, 1.0, 1.0, 0.85) # Semi-transparent white
+			central_reticle.scale = Vector2(1.0, 1.0)
+
+
+## Walks up the scene tree from `node` looking for the nearest Interactable
+## ancestor (or the node itself). Returns null if none is found within a
+## reasonable depth to avoid traversing the entire tree.
+func _find_interactable_ancestor(node: Node) -> Interactable:
+	var current := node
+	var depth := 0
+	while current != null and depth < 10:
+		if current is Interactable:
+			return current as Interactable
+		current = current.get_parent()
+		depth += 1
+	return null
 
 
 func _get_other_player() -> Node3D:
@@ -361,13 +558,18 @@ func _garble_text(text: String, quality: float) -> String:
 
 func _on_keypad_submitted(text: String) -> void:
 	if active_keypad and not active_keypad.check_code(text.strip_edges()):
-		keypad_input.modulate = Color.RED
-		await get_tree().create_timer(0.3).timeout
-		keypad_input.modulate = Color.WHITE
-		keypad_input.text = ""
+		if keypad_input.has_method("show_failure"):
+			keypad_input.show_failure()
+		else:
+			keypad_input.modulate = Color.RED
+			await get_tree().create_timer(0.3).timeout
+			keypad_input.modulate = Color.WHITE
 		return
-	keypad_input.visible = false
-	keypad_input.text = ""
+	
+	if keypad_input.has_method("show_success"):
+		keypad_input.show_success()
+	else:
+		keypad_input.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	active_keypad = null
 	show_message("Access granted. Door unlocked.")
@@ -450,6 +652,131 @@ void fragment() {
 
 
 # ============================================================================
+#  READING PANEL (pickup logs/notepads)
+# ============================================================================
+
+func _setup_reading_panel() -> void:
+	reading_panel = PanelContainer.new()
+	reading_panel.name = "ReadingPanel"
+	reading_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reading_panel.visible = false
+	reading_panel.custom_minimum_size = Vector2(700, 420)
+
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.01, 0.02, 0.04, 0.96)
+	sb.border_color = Color(0.1, 0.75, 1.0, 0.9)
+	sb.set_border_width_all(2)
+	sb.set_content_margin_all(20.0)
+	sb.corner_radius_bottom_left = 12
+	sb.corner_radius_bottom_right = 12
+	sb.corner_radius_top_left = 12
+	sb.corner_radius_top_right = 12
+	sb.shadow_color = Color(0.1, 0.75, 1.0, 0.15)
+	sb.shadow_size = 15
+	reading_panel.add_theme_stylebox_override("panel", sb)
+
+	var vbox := VBoxContainer.new()
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_theme_constant_override("separation", 12)
+	reading_panel.add_child(vbox)
+
+	# Header metadata
+	var header_hbox := HBoxContainer.new()
+	header_hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	var mock_model := Label.new()
+	mock_model.text = "SYS_RECOVERY: DATAPAD_v1.09"
+	mock_model.add_theme_font_size_override("font_size", 11)
+	mock_model.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	header_hbox.add_child(mock_model)
+	
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header_hbox.add_child(spacer)
+	
+	var mock_status := Label.new()
+	mock_status.text = "DECRYPTION: ACTIVE"
+	mock_status.add_theme_font_size_override("font_size", 11)
+	mock_status.add_theme_color_override("font_color", Color(0.2, 0.9, 0.4))
+	header_hbox.add_child(mock_status)
+	
+	vbox.add_child(header_hbox)
+
+	# Divider line
+	var div := ColorRect.new()
+	div.custom_minimum_size = Vector2(0, 2)
+	div.color = Color(0.1, 0.75, 1.0, 0.4)
+	div.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(div)
+
+	# Title
+	reading_title_label = Label.new()
+	reading_title_label.name = "ReadingTitleLabel"
+	reading_title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reading_title_label.add_theme_font_size_override("font_size", 24)
+	reading_title_label.add_theme_color_override("font_color", Color(1.0, 0.65, 0.1)) # Amber
+	vbox.add_child(reading_title_label)
+
+	# Content scroll container
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(660, 240)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.mouse_filter = Control.MOUSE_FILTER_PASS
+	vbox.add_child(scroll)
+
+	reading_text_label = RichTextLabel.new()
+	reading_text_label.name = "ReadingTextLabel"
+	reading_text_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reading_text_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reading_text_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	reading_text_label.bbcode_enabled = true
+	reading_text_label.fit_content = true
+	reading_text_label.add_theme_font_size_override("normal_font_size", 15)
+	reading_text_label.add_theme_color_override("default_color", Color(0.9, 0.9, 0.95))
+	scroll.add_child(reading_text_label)
+
+	# Bottom divider
+	var div2 := ColorRect.new()
+	div2.custom_minimum_size = Vector2(0, 1)
+	div2.color = Color(0.5, 0.5, 0.5, 0.2)
+	div2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(div2)
+
+	# Close hint
+	var close_hint := Label.new()
+	close_hint.name = "CloseHintLabel"
+	close_hint.text = "Press E or ESC to exit datapad link"
+	close_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	close_hint.add_theme_font_size_override("font_size", 12)
+	close_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	close_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(close_hint)
+
+	$CanvasLayer.add_child(reading_panel)
+	reading_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+
+
+## Opens the full-screen reading panel with the given title/text. Called by
+## ReadableLog interactables (notepads, terminals) instead of the quick
+## show_message() popup, for a more deliberate "pick up and read" moment.
+func show_reading_panel(title: String, text: String) -> void:
+	if not is_multiplayer_authority() or reading_panel == null:
+		return
+	reading_title_label.text = title
+	reading_text_label.text = text
+	reading_panel.visible = true
+	is_reading = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _close_reading_panel() -> void:
+	reading_panel.visible = false
+	is_reading = false
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+# ============================================================================
 #  INVENTORY (simple string-key bag)
 # ============================================================================
 
@@ -488,15 +815,17 @@ func _setup_inventory_hud() -> void:
 	inventory_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	inventory_label.text = "Items: None"
 	
-	# Simple styled theme overlay background for the HUD items
+	# Premium translucent cyber styled box flat
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.07, 0.1, 0.7)
-	sb.set_content_margin_all(6.0)
-	sb.corner_radius_bottom_left = 4
-	sb.corner_radius_bottom_right = 4
-	sb.corner_radius_top_left = 4
-	sb.corner_radius_top_right = 4
+	sb.bg_color = Color(0.01, 0.03, 0.06, 0.75)
+	sb.border_color = Color(0.1, 0.6, 1.0, 0.5) # Neon cyan border accent
+	sb.border_width_left = 4
+	sb.set_content_margin_all(8.0)
+	sb.corner_radius_top_right = 6
+	sb.corner_radius_bottom_right = 6
 	inventory_label.add_theme_stylebox_override("normal", sb)
+	inventory_label.add_theme_font_size_override("font_size", 13)
+	inventory_label.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
 	
 	$CanvasLayer.add_child(inventory_label)
 
@@ -530,81 +859,38 @@ func _setup_combat_systems() -> void:
 		event.button_index = MOUSE_BUTTON_LEFT
 		InputMap.action_add_event("use_tool", event)
 
-	# 2. Build Tool holder & 3D visual placeholders
-	tool_holder = Node3D.new()
-	tool_holder.name = "ToolHolder"
-	camera.add_child(tool_holder)
+	# 2. Reference the GLB tool meshes already placed under ToolHolder / BoneAttachment3D in the scene
+	if tool_holder == null:
+		tool_holder = find_child("ToolHolder", true, false) as Node3D
+	if torch_mesh == null:
+		torch_mesh = find_child("WeldingTorchMesh", true, false) as Node3D
+	if disruptor_mesh == null:
+		disruptor_mesh = find_child("DisruptorMesh", true, false) as Node3D
+	if scanner_mesh == null:
+		scanner_mesh = find_child("ScannerMesh", true, false) as Node3D
 	
-	# Welding Torch Mesh: Cylinder
-	torch_mesh = MeshInstance3D.new()
-	torch_mesh.name = "WeldingTorchMesh"
-	var torch_geom = CylinderMesh.new()
-	torch_geom.top_radius = 0.04
-	torch_geom.bottom_radius = 0.04
-	torch_geom.height = 0.35
-	torch_mesh.mesh = torch_geom
+	# Transforms (Position, Rotation, Scale) are controlled directly in player.tscn / Inspector.
+	if is_instance_valid(torch_mesh): torch_mesh.visible = false
+	if is_instance_valid(disruptor_mesh): disruptor_mesh.visible = false
+	if is_instance_valid(scanner_mesh): scanner_mesh.visible = false
 	
-	var torch_mat = StandardMaterial3D.new()
-	torch_mat.albedo_color = Color(0.2, 0.6, 0.95) # Cyan-blue gas cylinder
-	torch_mat.metallic = 0.8
-	torch_mat.roughness = 0.2
-	torch_mesh.material_override = torch_mat
+	# Torch tip fire-light (for flash effect on use)
+	if is_instance_valid(torch_mesh) and torch_light == null:
+		torch_light = OmniLight3D.new()
+		torch_light.light_color = Color(0.1, 0.7, 1.0)
+		torch_light.light_energy = 0.0
+		torch_light.omni_range = 3.0
+		torch_light.position = Vector3(0, 0.2, 0)
+		torch_mesh.add_child(torch_light)
 	
-	torch_mesh.position = Vector3(0.25, -0.22, -0.45)
-	torch_mesh.rotation_degrees = Vector3(-80, 15, 0)
-	torch_mesh.visible = false
-	tool_holder.add_child(torch_mesh)
-	
-	# Torch tip fire-light
-	torch_light = OmniLight3D.new()
-	torch_light.light_color = Color(0.1, 0.7, 1.0)
-	torch_light.light_energy = 0.0
-	torch_light.omni_range = 3.0
-	torch_light.position = Vector3(0, 0.2, 0)
-	torch_mesh.add_child(torch_light)
-
-	# Signal Disruptor Mesh: Box
-	disruptor_mesh = MeshInstance3D.new()
-	disruptor_mesh.name = "SignalDisruptorMesh"
-	var disrupt_geom = BoxMesh.new()
-	disrupt_geom.size = Vector3(0.1, 0.1, 0.4)
-	disruptor_mesh.mesh = disrupt_geom
-	
-	var disrupt_mat = StandardMaterial3D.new()
-	disrupt_mat.albedo_color = Color(0.9, 0.3, 0.15) # Safety orange
-	disrupt_mat.metallic = 0.5
-	disrupt_mat.roughness = 0.4
-	disruptor_mesh.material_override = disrupt_mat
-	
-	disruptor_mesh.position = Vector3(0.25, -0.22, -0.45)
-	disruptor_mesh.rotation_degrees = Vector3(-10, 5, 0)
-	disruptor_mesh.visible = false
-	tool_holder.add_child(disruptor_mesh)
-	
-	# Disruptor tip beam-light
-	disruptor_light = OmniLight3D.new()
-	disruptor_light.light_color = Color(1.0, 0.35, 0.1)
-	disruptor_light.light_energy = 0.0
-	disruptor_light.omni_range = 4.0
-	disruptor_light.position = Vector3(0, 0, -0.25)
-	disruptor_mesh.add_child(disruptor_light)
-
-	# Scanner Mesh: Flat plate/box
-	scanner_mesh = MeshInstance3D.new()
-	scanner_mesh.name = "ScannerMesh"
-	var scanner_geom = BoxMesh.new()
-	scanner_geom.size = Vector3(0.2, 0.15, 0.02)
-	scanner_mesh.mesh = scanner_geom
-	
-	var scanner_mat = StandardMaterial3D.new()
-	scanner_mat.albedo_color = Color(0.08, 0.4, 0.18) # Military Green
-	scanner_mat.roughness = 0.7
-	scanner_mesh.material_override = scanner_mat
-	
-	scanner_mesh.position = Vector3(0.2, -0.18, -0.38)
-	scanner_mesh.rotation_degrees = Vector3(-35, 20, -10)
-	scanner_mesh.visible = false
-	tool_holder.add_child(scanner_mesh)
+	# Disruptor tip beam-light (for flash effect on use)
+	if is_instance_valid(disruptor_mesh) and disruptor_light == null:
+		disruptor_light = OmniLight3D.new()
+		disruptor_light.light_color = Color(1.0, 0.35, 0.1)
+		disruptor_light.light_energy = 0.0
+		disruptor_light.omni_range = 4.0
+		disruptor_light.position = Vector3(0, 0, -0.25)
+		disruptor_mesh.add_child(disruptor_light)
 
 	# 3. Path Drawer & beam line materials
 	path_drawer = MeshInstance3D.new()
@@ -617,8 +903,6 @@ func _setup_combat_systems() -> void:
 	line_material.albedo_color = Color(0.0, 0.85, 1.0)
 	line_material.use_point_size = true
 	line_material.point_size = 3.0
-
-	# 4. CanvasLayer HUD setups
 	# Tool indicator label
 	tool_indicator = Label.new()
 	tool_indicator.name = "ToolIndicator"
@@ -631,13 +915,15 @@ func _setup_combat_systems() -> void:
 	tool_indicator.text = "Held Tool: None"
 	
 	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.07, 0.1, 0.7)
-	sb.set_content_margin_all(6.0)
-	sb.corner_radius_bottom_left = 4
-	sb.corner_radius_bottom_right = 4
-	sb.corner_radius_top_left = 4
-	sb.corner_radius_top_right = 4
+	sb.bg_color = Color(0.01, 0.03, 0.06, 0.75)
+	sb.border_color = Color(1.0, 0.65, 0.1, 0.5) # Amber/orange border accent
+	sb.border_width_right = 4
+	sb.set_content_margin_all(8.0)
+	sb.corner_radius_top_left = 6
+	sb.corner_radius_bottom_left = 6
 	tool_indicator.add_theme_stylebox_override("normal", sb)
+	tool_indicator.add_theme_font_size_override("font_size", 13)
+	tool_indicator.add_theme_color_override("font_color", Color(1.0, 0.9, 0.8))
 	$CanvasLayer.add_child(tool_indicator)
 	
 	# Scanner targeted info panel
@@ -651,12 +937,14 @@ func _setup_combat_systems() -> void:
 	scanner_display.visible = false
 	
 	var sb_scan = StyleBoxFlat.new()
-	sb_scan.bg_color = Color(0.02, 0.15, 0.06, 0.85)
-	sb_scan.border_color = Color(0.1, 0.9, 0.3)
+	sb_scan.bg_color = Color(0.0, 0.04, 0.02, 0.85) # matrix dark green
+	sb_scan.border_color = Color(0.2, 0.95, 0.4, 0.8) # emerald green border
 	sb_scan.set_border_width_all(2)
 	sb_scan.set_content_margin_all(12.0)
-	sb_scan.corner_radius_top_left = 6
-	sb_scan.corner_radius_bottom_left = 6
+	sb_scan.corner_radius_top_left = 8
+	sb_scan.corner_radius_bottom_left = 8
+	sb_scan.shadow_color = Color(0.2, 0.95, 0.4, 0.1)
+	sb_scan.shadow_size = 8
 	scanner_display.add_theme_stylebox_override("panel", sb_scan)
 	
 	scanner_label = RichTextLabel.new()
@@ -677,25 +965,116 @@ func _setup_combat_systems() -> void:
 	$CanvasLayer.add_child(blackout_rect)
 
 	# Central Reticle/Crosshair Dot
-	var reticle = Panel.new()
-	reticle.name = "CentralReticle"
-	reticle.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	reticle.custom_minimum_size = Vector2(6, 6)
-	reticle.size = Vector2(6, 6)
+	central_reticle = Panel.new()
+	central_reticle.name = "CentralReticle"
+	central_reticle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	central_reticle.custom_minimum_size = Vector2(6, 6)
+	central_reticle.size = Vector2(6, 6)
+	central_reticle.pivot_offset = Vector2(3, 3)
 	
-	# Round white dot style box
 	var reticle_style = StyleBoxFlat.new()
 	reticle_style.bg_color = Color(1.0, 1.0, 1.0, 0.85) # Semi-transparent white
 	reticle_style.corner_radius_top_left = 3
 	reticle_style.corner_radius_top_right = 3
 	reticle_style.corner_radius_bottom_left = 3
 	reticle_style.corner_radius_bottom_right = 3
-	reticle_style.shadow_color = Color(0, 0, 0, 0.45) # Dark shadow for visibility against bright backgrounds
+	reticle_style.shadow_color = Color(0, 0, 0, 0.45)
 	reticle_style.shadow_size = 1
-	reticle.add_theme_stylebox_override("panel", reticle_style)
+	central_reticle.add_theme_stylebox_override("panel", reticle_style)
 	
-	$CanvasLayer.add_child(reticle)
-	reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+	$CanvasLayer.add_child(central_reticle)
+	central_reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+
+	# Objective HUD Banner (Top Center)
+	objective_banner = PanelContainer.new()
+	objective_banner.name = "ObjectiveBanner"
+	objective_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	objective_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	
+	var sb_obj = StyleBoxFlat.new()
+	sb_obj.bg_color = Color(0.01, 0.03, 0.06, 0.85) # dark sci-fi blue/black
+	sb_obj.border_color = Color(1.0, 0.6, 0.1, 0.85) # Amber outline
+	sb_obj.border_width_bottom = 3 # bottom highlight line
+	sb_obj.set_content_margin_all(10.0)
+	sb_obj.corner_radius_bottom_left = 6
+	sb_obj.corner_radius_bottom_right = 6
+	objective_banner.add_theme_stylebox_override("panel", sb_obj)
+	
+	objective_label = Label.new()
+	objective_label.name = "ObjectiveLabel"
+	objective_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	objective_label.text = "OBJECTIVE: Investigate Habitation Wing & Locate Crew Manifest"
+	objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	objective_label.add_theme_font_size_override("font_size", 14)
+	objective_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5)) # Amber yellow text
+	objective_banner.add_child(objective_label)
+	$CanvasLayer.add_child(objective_banner)
+	objective_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE)
+	objective_banner.offset_top = 16.0
+
+	# Dialog Subtitle Panel (Bottom Center)
+	dialog_banner = PanelContainer.new()
+	dialog_banner.name = "DialogBanner"
+	dialog_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dialog_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	dialog_banner.visible = false
+	
+	var sb_dia = StyleBoxFlat.new()
+	sb_dia.bg_color = Color(0.01, 0.02, 0.04, 0.9) # deeper translucent dark
+	sb_dia.border_color = Color(0.1, 0.75, 1.0, 0.8) # cyan highlight outline
+	sb_dia.border_width_top = 2 # top highlight line
+	sb_dia.set_content_margin_all(12.0)
+	sb_dia.corner_radius_top_left = 8
+	sb_dia.corner_radius_top_right = 8
+	dialog_banner.add_theme_stylebox_override("panel", sb_dia)
+	
+	dialog_label = RichTextLabel.new()
+	dialog_label.name = "DialogLabel"
+	dialog_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dialog_label.custom_minimum_size = Vector2(520, 50)
+	dialog_label.bbcode_enabled = true
+	dialog_banner.add_child(dialog_label)
+	$CanvasLayer.add_child(dialog_banner)
+	dialog_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE)
+	dialog_banner.offset_top = -120.0
+	dialog_banner.offset_bottom = -70.0
+
+
+func _setup_message_panel_style() -> void:
+	if message_panel == null or message_label == null:
+		return
+	# Reposition to true center-bottom
+	message_panel.anchors_preset = Control.PRESET_CENTER_BOTTOM
+	message_panel.anchor_left = 0.5
+	message_panel.anchor_top = 1.0
+	message_panel.anchor_right = 0.5
+	message_panel.anchor_bottom = 1.0
+	message_panel.offset_left = -260.0
+	message_panel.offset_top = -120.0
+	message_panel.offset_right = 260.0
+	message_panel.offset_bottom = -60.0
+	message_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	message_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	
+	# Premium glassmorphic style
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.01, 0.03, 0.06, 0.88)
+	sb.border_color = Color(0.1, 0.75, 1.0, 0.7)
+	sb.border_width_top = 2
+	sb.set_content_margin_all(14.0)
+	sb.corner_radius_top_left = 8
+	sb.corner_radius_top_right = 8
+	sb.corner_radius_bottom_left = 4
+	sb.corner_radius_bottom_right = 4
+	sb.shadow_color = Color(0.1, 0.75, 1.0, 0.1)
+	sb.shadow_size = 10
+	message_panel.add_theme_stylebox_override("panel", sb)
+	
+	# Style the label text
+	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	message_label.add_theme_font_size_override("font_size", 14)
+	message_label.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
 
 
 func _setup_hud_mouse_filters() -> void:
@@ -712,6 +1091,42 @@ func _setup_hud_mouse_filters() -> void:
 			node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+func _connect_narrative_managers() -> void:
+	var obj_connected := false
+	var dia_connected := false
+
+	var obj_mgr = ObjectiveManager.instance
+	if not obj_mgr and get_tree() and get_tree().current_scene:
+		obj_mgr = get_tree().current_scene.get_node_or_null("ObjectiveManager")
+	if obj_mgr:
+		if not obj_mgr.objective_updated.is_connected(_on_objective_updated):
+			obj_mgr.objective_updated.connect(_on_objective_updated)
+		_on_objective_updated(obj_mgr.current_objective)
+		obj_connected = true
+
+	var dia_mgr = DialogManager.instance
+	if not dia_mgr and get_tree() and get_tree().current_scene:
+		dia_mgr = get_tree().current_scene.get_node_or_null("DialogManager")
+	if dia_mgr:
+		if not dia_mgr.dialog_triggered.is_connected(_on_dialog_triggered):
+			dia_mgr.dialog_triggered.connect(_on_dialog_triggered)
+		dia_connected = true
+
+	_narrative_connected = obj_connected and dia_connected
+
+
+func _on_objective_updated(new_text: String) -> void:
+	if objective_label:
+		objective_label.text = new_text
+
+
+func _on_dialog_triggered(speaker: String, text: String, duration: float) -> void:
+	if dialog_banner and dialog_label:
+		dialog_label.text = "[color=orange][%s][/color] %s" % [speaker, text]
+		dialog_banner.visible = true
+		dialog_timer = duration
+
+
 func _ensure_input_action(action_name: String, keycode: Key) -> void:
 	if not InputMap.has_action(action_name):
 		InputMap.add_action(action_name)
@@ -726,9 +1141,14 @@ func _equip_tool(tool_id: String) -> void:
 	else:
 		equipped_tool = tool_id
 		
-	torch_mesh.visible = (equipped_tool == "welding_torch")
-	disruptor_mesh.visible = (equipped_tool == "signal_disruptor")
-	scanner_mesh.visible = (equipped_tool == "scanner_attachment")
+	if is_instance_valid(torch_mesh):
+		torch_mesh.visible = (equipped_tool == "welding_torch")
+	if is_instance_valid(disruptor_mesh):
+		disruptor_mesh.visible = (equipped_tool == "signal_disruptor")
+	if is_instance_valid(scanner_mesh):
+		scanner_mesh.visible = (equipped_tool == "scanner_attachment")
+	
+	print("[EquipTool] tool_id: ", tool_id, " | equipped_tool: ", equipped_tool, " | torch: ", is_instance_valid(torch_mesh) and torch_mesh.visible, " | disruptor: ", is_instance_valid(disruptor_mesh) and disruptor_mesh.visible, " | scanner: ", is_instance_valid(scanner_mesh) and scanner_mesh.visible)
 	
 	_update_tool_hud()
 
@@ -781,9 +1201,10 @@ func _use_welding_torch() -> void:
 	tween.tween_property(tool_holder, "position", Vector3.ZERO, 0.12)
 	
 	# Tip flash
-	torch_light.light_energy = 5.0
-	var flash_tween = create_tween()
-	flash_tween.tween_property(torch_light, "light_energy", 0.0, 0.3)
+	if is_instance_valid(torch_light):
+		torch_light.light_energy = 5.0
+		var flash_tween = create_tween()
+		flash_tween.tween_property(torch_light, "light_energy", 0.0, 0.3)
 	
 	# Welder Raycast (Extended Range: 6.0m)
 	var space_state = get_world_3d().direct_space_state
@@ -817,9 +1238,10 @@ func _use_signal_disruptor() -> void:
 	tween.tween_property(tool_holder, "position", Vector3.ZERO, 0.15)
 	
 	# Tip flash
-	disruptor_light.light_energy = 6.0
-	var flash_tween = create_tween()
-	flash_tween.tween_property(disruptor_light, "light_energy", 0.0, 0.2)
+	if is_instance_valid(disruptor_light):
+		disruptor_light.light_energy = 6.0
+		var flash_tween = create_tween()
+		flash_tween.tween_property(disruptor_light, "light_energy", 0.0, 0.2)
 	
 	# Fire Raycast (Extended Range: 60.0m)
 	var space_state = get_world_3d().direct_space_state
@@ -973,3 +1395,4 @@ func knockout() -> void:
 	
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	is_ko = false
+# wakatime_sync

@@ -83,3 +83,4 @@ This document outlines all remaining steps, scenes, and mechanics needed to buil
 - [ ] **Scene Setup (`06_aftersignal`):**
   - [ ] Create a short, atmospheric ending sequence (rescue shuttle arriving, static feedback broadcast, or silent separation scene) matching each of the three ending outcomes.
 - [ ] Create end-credits roll and return-to-menu triggers.
+# Refactored logic bounds - 05:38

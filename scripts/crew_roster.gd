@@ -27,4 +27,11 @@ func _ready() -> void:
 
 
 func interact(player: Node = null) -> void:
-	_notify(player, message)
+	if player and player.has_method("show_reading_panel"):
+		player.show_reading_panel("PERSONNEL MANIFEST", message)
+	else:
+		_notify(player, message)
+	if ObjectiveManager.instance:
+		ObjectiveManager.instance.set_objective("OBJECTIVE: Cross-reference Manifest in Habitation Quarters")
+	if DialogManager.instance:
+		DialogManager.instance.play_dialog("SALVAGER A", "Manifest registers 12 primary crew... check the room numbers in the hab wing to see where they stayed.")

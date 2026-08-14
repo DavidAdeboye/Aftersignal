@@ -14,6 +14,7 @@ enum State { PATROL, CHASE, STUNNED }
 
 @export var current_state: State = State.PATROL
 @export var disrupt_code: String = "VENT"
+@export var drones_active: bool = false ## Toggle to false to pause all drone attacks & movement for exploration/testing
 
 # Replication variables
 @export var sync_position: Vector3
@@ -72,6 +73,10 @@ func _physics_process(delta: float) -> void:
 
 
 func _server_physics_process(delta: float) -> void:
+	if not drones_active:
+		velocity = Vector3.ZERO
+		return
+
 	match current_state:
 		State.PATROL:
 			_patrol_state(delta)

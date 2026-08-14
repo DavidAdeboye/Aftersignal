@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bne6qx2t1xnmu"]
+
+[ext_resource type="PackedScene" uid="uid://wmfyqybwy4he" path="res://scenes/crystal_low_noise_material.glb" id="1_r57si"]
+
+[node name="Sketchfab_Scene" unique_id=1444175602 instance=ExtResource("1_r57si")]
