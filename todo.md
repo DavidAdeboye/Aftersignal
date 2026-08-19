@@ -1,69 +1,102 @@
-# Godot Editor & Testing Checklist (`todo.md`)
+# Act 1 / Wing 1 Completion Checklist
 
-All 3D story terminals, wall inspection points, and airlock transition triggers have been **pre-positioned directly in the scene code** for you! No manual 3D dragging is needed in the Godot Editor.
+This checklist defines the work required before Act 1 can be considered complete and player-ready.
 
----
+## 1. Authoritative Wing 1 Scene
 
-## 1. Pre-Positioned Scene Objects (`landing_bay.tscn`)
+- [x] Choose `landing_bay.scn` as the authoritative Wing 1 scene.
+- [x] Update the menu to load `landing_bay.scn` for Host, Join, and direct game entry.
+- [ ] Remove duplicate, obsolete, and temporary Wing 1 scene files after the merge.
+- [ ] Confirm the scene launched from the main menu contains all intended Act 1 content.
 
-- [x] **`CrewRosterTerminal` (Computer Manifest):** Positioned on the desk near spawn (`1.45, 0.40, 13.86`).
-- [x] **`MissingRoomGap` (Wall Inspection Node):** Mounted on the hab corridor wall (`1.85, 1.20, -11.15`).
-- [x] **`DrFarrowLog1` (Day 12 Audio Log):** Positioned on the storage corridor desk (`3.20, 0.40, -2.50`).
-- [x] **`DrFarrowLog2` (Day 28 Research Memo):** Positioned on the Science Lab main desk (`-18.50, 0.60, -7.50`).
-- [x] **`ResearchLabsAirlock` (Act 2 Level Transition):** Mounted on the exit airlock doorway (`-22.50, 1.20, -15.50`).
+## 2. Act 1 Progression
 
----
+Implement and test a clear, stateful sequence:
 
-## 2. In-Game Testing Steps (`F5` in Godot)
+- [ ] Player A reads the 12-person crew roster.
+- [ ] Player B inspects the missing Quarters 12 gap.
+- [ ] Players investigate the habitation and Dr. Farrow logs.
+- [ ] Players solve the storage keypad puzzle.
+- [ ] Players solve the pressure-plate puzzle.
+- [ ] Players investigate the lab evidence required for the Act 1 reveal.
+- [ ] Players reach the Research Labs airlock.
+- [ ] Objectives advance only after the required interaction or puzzle is completed.
+- [ ] Objective state remains consistent for both players.
 
-Run `main_menu.tscn` and click **Host Game**:
+## 3. Act 1 Ending
 
-- [x] **Step 1 — Read Crew Manifest:**
-  - Walk up to the `CrewRosterTerminal` near spawn and press `E`.
-  - Verify top HUD banner updates to `"OBJECTIVE: Cross-reference Manifest in Habitation Quarters"` and radio chatter plays.
+- [ ] Keep the Research Labs airlock locked until Act 1 requirements are complete.
+- [ ] Add a clear Act 1 completion state before changing scenes.
+- [ ] Create the Research Labs target scene before enabling the transition, or use a temporary Act 1 completion screen.
+- [ ] Verify the transition works for both connected players.
+- [ ] Handle a missing target scene with a visible, player-facing error rather than a silent failure.
 
-- [x] **Step 2 — Inspect Missing Room 12 Wall:**
-  - Walk down the hab corridor past Room 11 and press `E` near `MissingRoomGap`.
-  - Verify HUD banner updates to `"OBJECTIVE: Access Science Lab & Investigate Dr. Farrow's Research"` and radio chatter triggers (*"Room 12 was never built!"*).
+## 4. Two-Player Asymmetry
 
-- [x] **Step 3 — Read Dr. Farrow's Research Logs:**
-  - Enter the Science Lab and press `E` at Dr. Farrow's research desk (`DrFarrowLog2`).
-  - Verify radio subtitles play (*"Organic-silicate crystal..."*) and HUD banner updates to `"OBJECTIVE: Proceed through Research Labs Airlock"`.
+- [ ] Restrict the roster clue to Player A's intended access.
+- [ ] Restrict the missing-room clue to Player B's intended access.
+- [ ] Ensure each player has information the other needs.
+- [ ] Ensure the important clues cannot all be collected by one player.
+- [ ] Verify the role restrictions in a two-client session.
 
-- [x] **Step 4 — Cycle Research Labs Airlock:**
-  - Walk down the end hallway to `ResearchLabsAirlock` and press `E`.
-  - Verify airlock cycling notification and transition to Act 2 (`02_research_labs.tscn`).
+## 5. Chat and Radio
 
+- [ ] Allow radio messages when players are separated beyond proximity-chat range.
+- [ ] Degrade or garble radio messages based on distance and jammer zones instead of preventing chat entirely.
+- [ ] Show clear signal states: strong, weak, and static.
+- [ ] Add visible and/or audio feedback when entering a jammer zone.
+- [ ] Confirm messages are delivered to the correct partner on both clients.
+- [ ] Verify code-sharing remains possible under intended signal conditions.
 
-## RESOLVED ISSUES:
-- [x] **Radio Chatter Subtitles & Objective Updates Fixed:** Fixed `dialog_timer` countdown and connected `DialogManager` and `ObjectiveManager` signals in `player_controller.gd`. When you press `E` at `CrewRosterTerminal`, the top HUD banner updates to `"OBJECTIVE: Cross-reference Manifest in Habitation Quarters"` and the radio subtitle banner displays at the bottom of the screen!
+## 6. Multiplayer Verification
 
----
+Run a complete two-client test for every shared mechanic:
 
-## 3. Science Lab 3D Model Asset Wishlist (For Downloading Props)
+- [ ] Player spawning and role assignment.
+- [ ] Roster interaction.
+- [ ] Missing Quarters 12 interaction.
+- [ ] Log and evidence interactions.
+- [ ] Code relay and keypad entry.
+- [ ] Door opening on both peers.
+- [ ] Pressure plates and door re-locking.
+- [ ] Signal jammer behavior.
+- [ ] Glyph drawing relay and clear action.
+- [ ] Player disconnect and rejoin.
+- [ ] Save/load behavior for permanent puzzle progress.
+- [ ] Airlock completion and scene transition.
 
-Here is the complete list of 3D models needed to furnish the Science Lab:
+## 7. Persistence
 
-### A. Primary Workstations & Furniture
-- [x] **Lead Research Desk (Dr. Farrow's Desk):** Low-poly sci-fi computer desk (`low-_poly_sci-_fi_computer_desk.glb`) & modern PC table positioned at Dr. Farrow's station.
-- [x] **Modular Lab Workbenches:** Stainless-steel modular lab workbench (`workbench.glb`) placed at Dr. Farrow's main workstation (`-18.5, 0, -7.5`).
-- [x] **Sci-Fi Operator Chairs:** Ergonomic swivel lab chairs (`lab_chair.glb`) positioned at primary lab desks (`-18.5, 0, -6.6` & `-17.5, 0, -12.6`).
-- [ ] **Wall Instrument Shelves:** Metal floating wall shelves for holding beakers, samples, and diagnostics.
+- [ ] Confirm a solved keypad door remains open after restarting the game.
+- [ ] Confirm pressure-plate doors do not persist open.
+- [ ] Add a clear Continue/New Game flow, or make reset behavior explicit and reliable.
+- [ ] Test stale and partially completed save data.
+- [ ] Verify saved state does not break after scene changes.
 
-### B. Scientific & Exobiology Equipment
-- [x] **Crystalline Sample Containment Chamber:** Bioluminescent glowing crystal specimen (`crystal_low_noise_material.glb`) with cyan emission light & incubator pump unit (`simple_centrifugal_pump_model.glb`) at `(-19, 0.8, -12)`.
-- [x] **Digital Electron Microscope:** Desktop microscope console (`microscope.glb`) placed on the main lab workbench (`-18.5, 0.82, -7.4`).
-- [ ] **Mass Spectrometer / Gas Chromatograph:** Boxy lab diagnostic machine with LED indicators.
-- [x] **Acoustic Wave / Frequency Analyzer:** Oscilloscope terminal (`oscillograph.glb`) placed on the lab workbench for 440 Hz resonance lore.
-- [x] **Centrifuge & Incubator Unit:** Centrifugal pump unit (`simple_centrifugal_pump_model.glb`) integrated with the crystal sample containment chamber.
+## 8. Set and Presentation Pass
 
-### C. Specimen Storage & Chemical Containment
-- [x] **Vertical Cryo-Storage Cylinders:** Tall cryogenic freezer tanks with frost effect / status screens. Already in the scene.
-- [ ] **Hazardous Reagent Cabinet:** Heavy metal storage locker with yellow/black biohazard decals.
-- [ ] **Sample Trays & Vials:** Racks holding glowing liquid test tubes, syringes, and glass petri dishes.
+- [ ] Align room pieces, doors, props, and collision.
+- [ ] Make the landing bay, habitation area, storage area, lab approach, and airlock read as one coherent wing.
+- [ ] Add clear visual cues around the roster, Quarters 12 gap, keypad, pressure plates, and airlock.
+- [ ] Remove distracting placeholder or out-of-scope content from Act 1.
+- [ ] Add ambient station audio.
+- [ ] Add radio static and interaction feedback audio.
+- [ ] Add visual feedback for puzzle state changes.
 
-### D. Environment & Safety Props
-- [ ] **Wall-Mounted Diagnostic Screens:** Flat holographic or CRT monitor panels showing station bio-telemetry.
-- [ ] **Emergency Eyewash & Decontamination Basin:** Wall-mounted emergency shower nozzle & stainless basin.
-- [ ] **Biohazard Waste Bins:** Bright yellow/orange heavy foot-pedal biohazard waste containers.
-- [ ] **Articulated Task Lighting:** Ceiling-mounted or desk-clamped adjustable inspection lamps.
+## 9. Act 1 Scope Review
+
+- [ ] Decide whether drones and salvager tools belong in Act 1 or should move to Act 3.
+- [ ] If retained, give them a clear tutorial purpose.
+- [ ] Ensure combat/tool systems do not distract from the Act 1 mystery and communication loop.
+- [ ] Keep Research Labs and Reactor implementation work tracked separately from this checklist.
+
+## 10. Verified Milestone
+
+- [ ] Remove temporary files and resolve duplicate scene ownership.
+- [ ] Review and commit all Act 1 changes as one coherent milestone.
+- [ ] Run the full two-player walkthrough from the main menu to the Act 1 ending.
+- [ ] Record the exact successful route and any remaining known issues.
+
+## Definition of Complete
+
+Act 1 is complete when two players can start from the main menu, receive different necessary information, communicate, solve the required puzzles in order, unlock and use the airlock, receive an Act 1 completion state, and restart without the flow breaking.

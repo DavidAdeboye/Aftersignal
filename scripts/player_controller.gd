@@ -11,8 +11,9 @@ extends CharacterBody3D
 @export var walk_speed: float = 3.5
 @export var mouse_sensitivity: float = 0.0025
 @export var jump_velocity: float = 4.5
-@export var clear_range: float = 2.0
-@export var chat_range: float = 5.0
+@export var clear_range: float = 6.0
+@export var chat_range: float = 18.0
+@export var remote_interp_speed: float = 14.0
 var in_chat_range: bool = false
 var signal_quality: float = 0.0
 
@@ -23,7 +24,7 @@ var signal_quality: float = 0.0
 @onready var chat_input: LineEdit = $CanvasLayer/ChatInput
 @onready var chat_log: RichTextLabel = $CanvasLayer/ChatLog
 @onready var signal_indicator: Label = $CanvasLayer/SignalIndicator
-@onready var keypad_input: Control = $CanvasLayer/KeypadPanel
+@onready var keypad_input: LineEdit = $CanvasLayer/KeypadInput
 @onready var message_panel: PanelContainer = $CanvasLayer/MessagePanel
 @onready var message_label: Label = $CanvasLayer/MessagePanel/MessageLabel
 @onready var glyph_pad: Control = $CanvasLayer/GlyphPad
@@ -43,6 +44,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var current_interactable: Interactable = null
 var current_door_body: Node = null
 var active_keypad: Node = null
+var keypad_modal: PanelContainer
+var keypad_status: Label
 var static_rect: ColorRect = null
 var inventory: Dictionary = {}
 var inventory_label: Label = null
@@ -100,6 +103,8 @@ var line_material: StandardMaterial3D = null
 
 # Procedural Viewmodel Sway & Movement Bobbing
 var viewmodel_bob_cycle: float = 0.0
+var viewmodel_base_position: Vector3 = Vector3.ZERO
+var viewmodel_base_rotation: Vector3 = Vector3.ZERO
 var mouse_delta_x: float = 0.0
 var mouse_delta_y: float = 0.0
 
@@ -108,8 +113,11 @@ func _enter_tree() -> void:
 	set_multiplayer_authority(int(str(name)))
 
 func _ready() -> void:
+	add_to_group("players")
+	camera.fov = 90.0
 	spawn_index = 0 if int(str(name)) == 1 else 1
 	position = spawn_points[spawn_index]
+	inventory["player1_badge" if spawn_index == 0 else "player2_badge"] = true
 
 	var astronaut_model: Node3D = get_node_or_null("AstronautModel") as Node3D
 	if astronaut_model:
@@ -138,7 +146,9 @@ func _ready() -> void:
 
 	if not is_multiplayer_authority():
 		$CanvasLayer.queue_free()
+		_set_remote_physics_profile()
 	else:
+		_set_local_view_layers()
 		_setup_static_overlay()
 		_setup_inventory_hud()
 		_setup_combat_systems()
@@ -147,8 +157,198 @@ func _ready() -> void:
 		_setup_hud_mouse_filters()
 		_connect_narrative_managers()
 		keypad_input.text_submitted.connect(_on_keypad_submitted)
+		_setup_keypad_input()
 
 	call_deferred("_setup_local_player")
+	call_deferred("_optimize_static_prop_collisions")
+	if is_multiplayer_authority():
+		call_deferred("_setup_viewmodel_motion")
+
+
+func _setup_keypad_input() -> void:
+	if keypad_input == null:
+		return
+	keypad_modal = PanelContainer.new()
+	keypad_modal.name = "KeypadModal"
+	keypad_modal.visible = false
+	keypad_modal.custom_minimum_size = Vector2(420, 310)
+	var modal_style := StyleBoxFlat.new()
+	modal_style.bg_color = Color(0.01, 0.02, 0.04, 0.98)
+	modal_style.border_color = Color(0.15, 0.8, 1.0, 0.95)
+	modal_style.set_border_width_all(2)
+	modal_style.set_corner_radius_all(8)
+	modal_style.set_content_margin_all(24.0)
+	keypad_modal.add_theme_stylebox_override("panel", modal_style)
+	$CanvasLayer.add_child(keypad_modal)
+	keypad_modal.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 14)
+	keypad_modal.add_child(content)
+	var title := Label.new()
+	title.text = "SEALED DOOR KEYPAD"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.72, 0.2))
+	content.add_child(title)
+	var instructions := Label.new()
+	instructions.text = "Enter the 4-digit access code found at the remote terminal."
+	instructions.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	instructions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(instructions)
+
+	keypad_input.reparent(content)
+	keypad_input.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	keypad_input.placeholder_text = "Enter 4-digit access code"
+	keypad_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	keypad_input.max_length = 4
+	keypad_input.secret = true
+	keypad_input.add_theme_font_size_override("font_size", 24)
+	keypad_input.add_theme_color_override("font_color", Color(0.9, 0.98, 1.0))
+	keypad_input.add_theme_color_override("caret_color", Color(0.2, 0.85, 1.0))
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.015, 0.025, 0.05, 0.97)
+	style.border_color = Color(0.15, 0.8, 1.0, 0.9)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(14.0)
+	keypad_input.add_theme_stylebox_override("normal", style)
+	keypad_input.tooltip_text = "Enter the four-digit code relayed by your partner, then press Enter."
+	keypad_status = Label.new()
+	keypad_status.text = "Press Enter or Submit to unlock"
+	keypad_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	keypad_status.add_theme_color_override("font_color", Color(0.65, 0.72, 0.8))
+	content.add_child(keypad_status)
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 10)
+	content.add_child(actions)
+	var clear_button := Button.new()
+	clear_button.text = "Clear"
+	clear_button.pressed.connect(func(): keypad_input.text = ""; keypad_input.grab_focus())
+	actions.add_child(clear_button)
+	var cancel_button := Button.new()
+	cancel_button.text = "Cancel"
+	cancel_button.pressed.connect(_close_keypad)
+	actions.add_child(cancel_button)
+	var submit_button := Button.new()
+	submit_button.text = "Submit"
+	submit_button.pressed.connect(func(): _on_keypad_submitted(keypad_input.text))
+	actions.add_child(submit_button)
+
+
+func _close_keypad() -> void:
+	if keypad_modal:
+		keypad_modal.visible = false
+	keypad_input.visible = false
+	keypad_input.text = ""
+	active_keypad = null
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+func _set_remote_physics_profile() -> void:
+	# Remote avatars should be visible to pressure-plate Areas but must not
+	# physically shove or block the locally controlled player.
+	collision_layer = 2
+	collision_mask = 0
+	var body_shape := get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if body_shape:
+		body_shape.disabled = false
+	var arm_root := get_node_or_null("Head/Camera3D/fpsarm") as Node3D
+	if arm_root:
+		arm_root.visible = false
+
+
+func _set_local_view_layers() -> void:
+	# Keep the local full-body astronaut on a camera-excluded layer. The arms and
+	# tools stay on the normal layer so the owning camera renders only the
+	# first-person viewmodel.
+	var astronaut_model := get_node_or_null("AstronautModel")
+	if astronaut_model:
+		_set_layer_recursive(astronaut_model, 2)
+	var arm_root := get_node_or_null("Head/Camera3D/fpsarm")
+	if arm_root:
+		_set_layer_recursive(arm_root, 1)
+		camera.set_cull_mask_value(2, false)
+		camera.set_cull_mask_value(1, true)
+	# Collide with remote avatar layer to prevent camera clipping, while the
+	# remote avatar's collision mask remains zero so it cannot push us back.
+	collision_layer = 1
+	collision_mask = 3
+
+
+func _setup_viewmodel_motion() -> void:
+	var arm_root := get_node_or_null("Head/Camera3D/fpsarm") as Node3D
+	if arm_root:
+		viewmodel_base_position = arm_root.position
+		viewmodel_base_rotation = arm_root.rotation
+
+
+func _optimize_static_prop_collisions() -> void:
+	# Imported GLB props often carry triangle-by-triangle concave collision for
+	# every mesh part. That is unnecessarily expensive for decorative equipment
+	# and can cause physics hitches when the player approaches it. Keep the visual
+	# meshes, but disable only detailed prop collisions; room architecture and
+	# dedicated interactable bodies remain untouched.
+	var scene := get_tree().current_scene
+	if scene == null:
+		return
+	var prop_roots := [
+		"ScienceLab/LabTable",
+		"Microscope",
+		"Oscilloscope",
+		"CentrifugalPump",
+		"Workbench",
+		"LabChair",
+		"LabChair2",
+		"GamingChair"
+	]
+	for root_path in prop_roots:
+		var root := scene.get_node_or_null(NodePath(root_path)) as Node3D
+		if root:
+			_replace_with_box_collision(root)
+
+
+func _replace_with_box_collision(root: Node3D) -> void:
+	if root.has_meta("simple_collision_proxy_added"):
+		return
+	root.set_meta("simple_collision_proxy_added", true)
+	var bounds: AABB
+	var found_mesh := false
+	var meshes := root.find_children("", "MeshInstance3D", true, false)
+	for mesh_node in meshes:
+		var mesh_instance := mesh_node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var mesh_bounds := mesh_instance.get_aabb()
+		mesh_bounds = mesh_instance.global_transform * mesh_bounds
+		if not found_mesh:
+			bounds = mesh_bounds
+			found_mesh = true
+		else:
+			bounds = bounds.merge(mesh_bounds)
+		_disable_concave_shapes(mesh_instance)
+
+	if not found_mesh:
+		return
+	var proxy := StaticBody3D.new()
+	proxy.name = "SimpleCollisionProxy"
+	proxy.collision_layer = 1
+	proxy.collision_mask = 1
+	var shape_node := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = bounds.size
+	shape_node.shape = box
+	proxy.global_position = bounds.position + bounds.size * 0.5
+	proxy.add_child(shape_node)
+	root.get_parent().call_deferred("add_child", proxy)
+
+
+func _disable_concave_shapes(node: Node) -> void:
+	if node is CollisionShape3D and (node as CollisionShape3D).shape is ConcavePolygonShape3D:
+		(node as CollisionShape3D).disabled = true
+	for child in node.get_children():
+		_disable_concave_shapes(child)
 
 func _tint_meshes_recursive(node: Node, color: Color) -> void:
 	if node is MeshInstance3D:
@@ -215,7 +415,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("use_tool") and equipped_tool != "":
 		_use_equipped_tool()
 
-	if event.is_action_pressed("toggle_chat") and in_chat_range and not chat_input.visible:
+	if event.is_action_pressed("toggle_chat") and not chat_input.visible:
 		chat_input.visible = true
 		chat_input.grab_focus()
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -228,13 +428,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		NetworkManager.clear_glyphs.rpc()
 
 	if event.is_action_pressed("ui_cancel"):
+		if active_keypad:
+			_close_keypad()
+			return
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 	if event.is_action_pressed("interact"):
 		if current_interactable:
 			if current_interactable.has_method("check_code"):
 				active_keypad = current_interactable
+				if keypad_modal:
+					keypad_modal.visible = true
 				keypad_input.visible = true
+				keypad_input.text = ""
+				show_message("SEALED DOOR\nEnter the 4-digit code relayed by your partner. Press Enter to submit or Esc to cancel.", 6.0)
 				keypad_input.grab_focus()
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			else:
@@ -248,8 +455,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		# Smoothly interpolate remote player position and rotation
-		global_position = global_position.lerp(sync_position, clamp(INTERP_SPEED * delta, 0.0, 1.0))
-		rotation = rotation.lerp(sync_rotation, clamp(INTERP_SPEED * delta, 0.0, 1.0))
+		var blend := 1.0 - exp(-remote_interp_speed * delta)
+		global_position = global_position.lerp(sync_position, blend)
+		rotation.x = lerp_angle(rotation.x, sync_rotation.x, blend)
+		rotation.y = lerp_angle(rotation.y, sync_rotation.y, blend)
+		rotation.z = lerp_angle(rotation.z, sync_rotation.z, blend)
 		_update_animation()
 		return
 
@@ -371,29 +581,29 @@ func _process_viewmodel_sway(delta: float) -> void:
 	
 	if on_ground and horiz_speed > 0.1:
 		# Dynamic gait bobbing scaled to movement velocity
-		var bob_frequency: float = 10.0 if horiz_speed <= walk_speed else 14.0
-		var bob_amount_x: float = 0.012
-		var bob_amount_y: float = 0.010
+		var bob_frequency: float = 7.0 if horiz_speed <= walk_speed else 9.0
+		var bob_amount_x: float = 0.004
+		var bob_amount_y: float = 0.003
 		
 		viewmodel_bob_cycle += delta * bob_frequency
 		bob_x = cos(viewmodel_bob_cycle * 0.5) * bob_amount_x
 		bob_y = sin(viewmodel_bob_cycle) * bob_amount_y
-		tilt_z = sin(viewmodel_bob_cycle * 0.5) * 0.025
+		tilt_z = sin(viewmodel_bob_cycle * 0.5) * 0.008
 	else:
 		# Gentle idle breathing sway
-		viewmodel_bob_cycle += delta * 2.0
-		bob_x = cos(viewmodel_bob_cycle * 0.5) * 0.0025
-		bob_y = sin(viewmodel_bob_cycle) * 0.0025
+		viewmodel_bob_cycle += delta * 1.2
+		bob_x = cos(viewmodel_bob_cycle * 0.5) * 0.0005
+		bob_y = sin(viewmodel_bob_cycle) * 0.0005
 		
 	# Mouse look rotational sway (viewmodel lags slightly behind mouse turn)
-	var sway_x: float = clampf(-mouse_delta_x * 0.00025, -0.025, 0.025)
-	var sway_y: float = clampf(mouse_delta_y * 0.00025, -0.025, 0.025)
+	var sway_x: float = clampf(-mouse_delta_x * 0.00008, -0.008, 0.008)
+	var sway_y: float = clampf(mouse_delta_y * 0.00008, -0.008, 0.008)
 	mouse_delta_x = move_toward(mouse_delta_x, 0.0, delta * 300.0)
 	mouse_delta_y = move_toward(mouse_delta_y, 0.0, delta * 300.0)
 	
 	# Blend sway into viewmodel position & rotation
-	var target_pos: Vector3 = Vector3(bob_x + sway_x, bob_y + sway_y, 0.0)
-	var target_rot: Vector3 = Vector3(sway_y * 0.6, sway_x * 0.6, tilt_z)
+	var target_pos: Vector3 = viewmodel_base_position + Vector3(bob_x + sway_x, bob_y + sway_y, 0.0)
+	var target_rot: Vector3 = viewmodel_base_rotation + Vector3(sway_y * 0.6, sway_x * 0.6, tilt_z)
 	
 	tool_holder.position = tool_holder.position.lerp(target_pos, clampf(delta * 12.0, 0.0, 1.0))
 	tool_holder.rotation.x = lerp_angle(tool_holder.rotation.x, target_rot.x, clampf(delta * 12.0, 0.0, 1.0))
@@ -410,14 +620,10 @@ func _update_chat_range() -> void:
 	var other := _get_other_player()
 	if other:
 		var distance := global_position.distance_to(other.global_position)
-		in_chat_range = distance <= chat_range
-
-		if distance <= clear_range:
-			signal_quality = 1.0
-		elif distance <= chat_range:
-			signal_quality = 1.0 - ((distance - clear_range) / (chat_range - clear_range))
-		else:
-			signal_quality = 0.0
+		# Chat has no hard range limit. Distance progressively degrades the
+		# transmission, while jammers/obstructions can degrade it further.
+		in_chat_range = true
+		signal_quality = clampf(1.0 / (1.0 + max(0.0, distance - clear_range) * 0.045), 0.08, 1.0)
 
 		# Radio dead-zones (SignalJammer nodes) further degrade the signal while
 		# either player stands inside them — forcing the pair to relocate for a
@@ -426,11 +632,9 @@ func _update_chat_range() -> void:
 		var jam := _worst_jam_multiplier(global_position)
 		jam = min(jam, _worst_jam_multiplier(other.global_position))
 		signal_quality *= jam
-		if signal_quality <= 0.0:
-			in_chat_range = false
 	else:
-		in_chat_range = false
-		signal_quality = 0.0
+		in_chat_range = true
+		signal_quality = 0.35
 
 	# Update screen static overlay based on local jamming
 	if static_rect and static_rect.material:
@@ -451,9 +655,7 @@ func _worst_jam_multiplier(world_pos: Vector3) -> float:
 
 
 func _update_signal_indicator() -> void:
-	if not in_chat_range:
-		signal_indicator.text = ""
-	elif signal_quality > 0.75:
+	if signal_quality > 0.75:
 		signal_indicator.text = "Signal: Strong"
 	elif signal_quality > 0.35:
 		signal_indicator.text = "Signal: Weak"
@@ -534,7 +736,10 @@ func _on_chat_submitted(text: String) -> void:
 		var player_label: String = "Player " + str(spawn_index + 1)
 		var color: Color = spawn_colors[spawn_index]
 		var hex: String = color.to_html(false)
-		NetworkManager.receive_chat_message.rpc("[color=#" + hex + "]" + player_label + ":[/color] " + garbled)
+		var formatted := "[color=#" + hex + "]" + player_label + ":[/color] " + garbled
+		_append_chat_line(formatted)
+		if multiplayer.has_multiplayer_peer():
+			NetworkManager.receive_chat_message.rpc(formatted)
 
 
 func _append_chat_line(formatted_text: String) -> void:
@@ -558,6 +763,11 @@ func _garble_text(text: String, quality: float) -> String:
 
 func _on_keypad_submitted(text: String) -> void:
 	if active_keypad and not active_keypad.check_code(text.strip_edges()):
+		if keypad_status:
+			keypad_status.text = active_keypad.get_failure_reason() if active_keypad.has_method("get_failure_reason") else "Access denied."
+			keypad_status.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3))
+		if active_keypad.has_method("get_failure_reason"):
+			show_message(active_keypad.get_failure_reason())
 		if keypad_input.has_method("show_failure"):
 			keypad_input.show_failure()
 		else:
@@ -570,6 +780,11 @@ func _on_keypad_submitted(text: String) -> void:
 		keypad_input.show_success()
 	else:
 		keypad_input.visible = false
+	if keypad_modal:
+		keypad_modal.visible = false
+	if keypad_status:
+		keypad_status.text = "Press Enter or Submit to unlock"
+		keypad_status.add_theme_color_override("font_color", Color(0.65, 0.72, 0.8))
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	active_keypad = null
 	show_message("Access granted. Door unlocked.")

@@ -13,6 +13,9 @@ func _ready() -> void:
 
 
 func interact(player: Node = null) -> void:
+	if not PuzzleState.is_act1_complete():
+		_notify(player, "AIRLOCK LOCKED: Complete the Wing 1 investigation and puzzles first.")
+		return
 	if not is_unlocked:
 		_notify(player, locked_message)
 		return
@@ -28,4 +31,6 @@ func change_level_rpc(scene_path: String) -> void:
 	if ResourceLoader.exists(scene_path):
 		get_tree().change_scene_to_file(scene_path)
 	else:
-		print("[LevelTransition] Target scene path not found: ", scene_path)
+		var local_player := NetworkManager._get_local_player()
+		if local_player and local_player.has_method("show_message"):
+			local_player.show_message("ACT 1 COMPLETE - Research Labs content is not installed yet.", 6.0)

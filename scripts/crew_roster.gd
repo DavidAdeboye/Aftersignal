@@ -27,11 +27,13 @@ func _ready() -> void:
 
 
 func interact(player: Node = null) -> void:
+	if player and player.has_method("has_item") and not player.has_item("player1_badge"):
+		_notify(player, "Terminal requires clearance — your partner might have access.")
+		return
 	if player and player.has_method("show_reading_panel"):
 		player.show_reading_panel("PERSONNEL MANIFEST", message)
 	else:
 		_notify(player, message)
-	if ObjectiveManager.instance:
-		ObjectiveManager.instance.set_objective("OBJECTIVE: Cross-reference Manifest in Habitation Quarters")
+	PuzzleState.complete_act1_step("roster")
 	if DialogManager.instance:
 		DialogManager.instance.play_dialog("SALVAGER A", "Manifest registers 12 primary crew... check the room numbers in the hab wing to see where they stayed.")

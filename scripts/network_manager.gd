@@ -96,7 +96,7 @@ func _spawn_player(id: int) -> void:
 	PuzzleState.call_deferred("apply_persisted_doors")
 
 
-@rpc("any_peer", "call_local")
+@rpc("any_peer", "call_remote", "reliable")
 func receive_chat_message(formatted_text: String) -> void:
 	var local_player = _get_local_player()
 	if local_player:
@@ -144,6 +144,34 @@ func toggle_door(door_path: NodePath) -> void:
 	var door = get_tree().current_scene.get_node_or_null(door_path)
 	if door and "opened" in door:
 		door.opened = not door.opened
+
+## Shared world pickup. Every peer removes the same item and only the player
+## who triggered it receives the inventory entry.
+@rpc("any_peer", "call_remote", "reliable")
+func request_collect_pickup(item_path: NodePath, item_id: String, collector_path: NodePath) -> void:
+	if not multiplayer.is_server():
+		return
+	var item := get_tree().current_scene.get_node_or_null(item_path)
+	if item == null or not is_instance_valid(item):
+		return
+	if item.get_meta("collected", false):
+		return
+	item.set_meta("collected", true)
+	collect_pickup.rpc(item_path, item_id, collector_path)
+
+@rpc("authority", "call_local", "reliable")
+func collect_pickup(item_path: NodePath, item_id: String, collector_path: NodePath) -> void:
+	var item := get_tree().current_scene.get_node_or_null(item_path)
+	var collector := get_tree().current_scene.get_node_or_null(collector_path)
+	if collector and collector.has_method("add_item") and collector.is_multiplayer_authority():
+		collector.add_item(item_id)
+	if item == null or not is_instance_valid(item):
+		return
+	item.set_meta("collected", true)
+	item.visible = false
+	item.set_process(false)
+	item.set_physics_process(false)
+	item.queue_free()
 
 
 ## Relays a completed glyph stroke to the OTHER player's sketch pad. Same

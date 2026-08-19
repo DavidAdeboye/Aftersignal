@@ -21,7 +21,17 @@ func interact(player: Node = null) -> void:
 	if message != "":
 		_notify(player, message)
 	else:
-		print("Interacted with: ", name)
+		_notify(player, _fallback_terminal_record())
+
+func _fallback_terminal_record() -> String:
+	var terminal_name := name.to_lower()
+	if "power" in terminal_name or "generator" in terminal_name:
+		return "POWER ROUTING RECORD\n\nContainment-door power is divided between two manual floor switches. Both inputs must remain active simultaneously.\n\nACTION: Regroup with your partner and occupy both pressure plates."
+	if "hab" in terminal_name or "crew" in terminal_name:
+		return "HABITATION AUDIT\n\nManifest count: 12. Constructed quarters: 11. Quarter 12 has no registered doorway or service conduit.\n\nACTION: Inspect the wall beyond Quarter 11 after opening storage."
+	if "research" in terminal_name or "lab" in terminal_name:
+		return "FARROW PROJECT INDEX\n\nThree records were removed from this terminal. A handwritten field note was issued before the storage lockdown.\n\nACTION: Find the notebook and follow its two-person override procedure."
+	return "MAINTENANCE RELAY\n\nRemote credential display and sealed-door keypad are on separate circuits. Local keypad memory is intentionally blank.\n\nACTION: One player finds the access terminal and relays its code; the other enters it at the keypad."
 
 
 ## Helper — routes a message to the interacting player's HUD if possible,

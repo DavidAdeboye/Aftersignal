@@ -28,9 +28,63 @@ var _opened_doors: Dictionary = {}
 # Arbitrary named puzzle flags, e.g. "storage_keypad" -> true.
 var _solved_puzzles: Dictionary = {}
 
+const ACT1_STEPS := {
+	"roster": false,
+	"missing_room": false,
+	"research_logs": false,
+	"keypad": false,
+	"plates": false,
+	"lab_evidence": false,
+}
+var _act1_steps: Dictionary = ACT1_STEPS.duplicate()
+
 
 func _ready() -> void:
 	load_progress()
+	_act1_steps.merge(_solved_puzzles.get("act1_steps", {}), true)
+	call_deferred("_update_act1_objective")
+
+func complete_act1_step(step: String) -> void:
+	if not _act1_steps.has(step) or _act1_steps[step]:
+		return
+	_act1_steps[step] = true
+	_solved_puzzles["act1_steps"] = _act1_steps.duplicate()
+	save_progress()
+	_update_act1_objective()
+
+func _update_act1_objective() -> void:
+	if ObjectiveManager.instance == null:
+		return
+	var objective := "OBJECTIVE: Proceed to the Research Labs airlock"
+	if not is_act1_step_complete("roster"):
+		objective = "OBJECTIVE: Locate and read the 12-person crew manifest"
+	elif not is_act1_step_complete("keypad"):
+		objective = "OBJECTIVE: Relay access code 4471 and unlock the storage door"
+	elif not is_act1_step_complete("missing_room"):
+		objective = "OBJECTIVE: Inspect the habitation wall beyond Quarters 11"
+	elif not is_act1_step_complete("research_logs"):
+		objective = "OBJECTIVE: Find and read Dr. Farrow's research logs"
+	elif not is_act1_step_complete("plates"):
+		objective = "OBJECTIVE: Split up. Stand on both marked pressure plates simultaneously"
+	elif not is_act1_step_complete("lab_evidence"):
+		objective = "OBJECTIVE: Inspect the final laboratory evidence"
+	ObjectiveManager.instance.set_objective(objective)
+
+func is_act1_step_complete(step: String) -> bool:
+	return _act1_steps.get(step, false)
+
+func is_act1_complete() -> bool:
+	for value in _act1_steps.values():
+		if not value:
+			return false
+	return true
+
+func mark_act1_clue(clue: String) -> void:
+	_solved_puzzles["act1_clue_" + clue] = true
+	save_progress()
+
+func has_act1_clue(clue: String) -> bool:
+	return _solved_puzzles.get("act1_clue_" + clue, false)
 
 
 # ============================================================================
@@ -48,6 +102,9 @@ func register_plate(group_id: String, plate: Node, door_path: NodePath) -> void:
 
 
 func set_plate_pressed(group_id: String, plate: Node, pressed: bool) -> void:
+	if group_id == "storage_plates" or group_id == "lab_plates" or group_id == "act1_pressure_pair":
+		if not is_act1_step_complete("keypad"):
+			return
 	if not _plate_groups.has(group_id):
 		return
 	var group: Dictionary = _plate_groups[group_id]
@@ -76,6 +133,8 @@ func _evaluate_group(group_id: String) -> void:
 		return
 
 	if all_pressed:
+		if group_id == "storage_plates" or group_id == "lab_plates" or group_id == "act1_pressure_pair":
+			complete_act1_step("plates")
 		NetworkManager.unlock_door.rpc(door_path)
 	else:
 		NetworkManager.lock_door.rpc(door_path)
@@ -152,5 +211,6 @@ func apply_persisted_doors() -> void:
 func reset_progress() -> void:
 	_opened_doors.clear()
 	_solved_puzzles.clear()
+	_act1_steps = ACT1_STEPS.duplicate()
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(SAVE_PATH)

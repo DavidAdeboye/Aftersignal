@@ -2,7 +2,11 @@
 
 [ext_resource type="Script" uid="uid://cvhecb8ctvr77" path="res://scripts/player_controller.gd" id="1_4flbx"]
 [ext_resource type="Script" uid="uid://bl76amsla6emi" path="res://scripts/glyph_pad.gd" id="2_glyph"]
+[ext_resource type="PackedScene" uid="uid://cupumr311qtmh" path="res://models/free_fps_arms_gameready_-_rigged.glb" id="2_nfmqv"]
 [ext_resource type="PackedScene" uid="uid://chh3j4vglal7b" path="res://assets/characters/dark_astronaut/animations/Idle.fbx" id="3_rs8of"]
+[ext_resource type="PackedScene" uid="uid://dn85x04ewpqis" path="res://models/futuristic_sci-fi_planet_scanner_radar_thing.glb" id="3_www16"]
+[ext_resource type="PackedScene" uid="uid://b31d4ku5t073r" path="res://models/welding_torch.glb" id="4_06i2t"]
+[ext_resource type="PackedScene" uid="uid://hhyldxoyykil" path="res://models/low-poly_retro-style_sci-fi_space_laser_gun.glb" id="5_ud6ew"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6pmnr"]
 radius = 0.4
@@ -37,6 +41,37 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
 
 [node name="RayCast3D" type="RayCast3D" parent="Head/Camera3D" unique_id=384101216]
 target_position = Vector3(0, 0, -3)
+
+[node name="fpsarm" parent="Head/Camera3D" unique_id=1947030701 instance=ExtResource("2_nfmqv")]
+transform = Transform3D(1, 0, 0, 0, 0.9971429, -0.07553798, 0, 0.07553798, 0.9971429, 0.013299227, -1.2661415, 0.033972025)
+
+[node name="Skeleton3D" parent="Head/Camera3D/fpsarm/Sketchfab_model/c9da4915b07a4154b4a49fc8b287a1ce_fbx/RootNode/FRPS Arms Armature/Object_4" parent_id_path=PackedInt32Array(1947030701, 938212872) index="0" unique_id=1781279309]
+bones/2/position = Vector3(-0.1135411, 1.3143523, 0.07387149)
+bones/3/rotation = Quaternion(-0.41504183, 0.002009198, -0.15125932, 0.8971382)
+bones/3/scale = Vector3(0.99999994, 1.0000001, 1.0000001)
+bones/4/position = Vector3(2.756388e-08, 0.24628735, 1.0053813e-08)
+bones/4/rotation = Quaternion(0.035503127, -0.1994315, 0.0063400175, 0.97924787)
+bones/4/scale = Vector3(1.0000001, 0.9999998, 0.99999994)
+bones/27/position = Vector3(0.12998456, 1.3300312, 0.036572587)
+bones/27/rotation = Quaternion(0.10711197, -0.4268092, 0.877135, -0.1923414)
+bones/27/scale = Vector3(1.0000001, 1, 0.99999994)
+bones/28/rotation = Quaternion(-0.46654096, -0.13362566, 0.018950535, 0.8741422)
+bones/28/scale = Vector3(0.9999998, 0.99999994, 0.9999999)
+bones/29/position = Vector3(5.310787e-08, 0.24628733, 5.43047e-08)
+bones/29/rotation = Quaternion(-0.019104445, 0.018171733, 0.039552446, 0.9988696)
+bones/29/scale = Vector3(0.9999999, 1.0000002, 0.99999994)
+
+[node name="WeldingTorchMesh" parent="Head/Camera3D/fpsarm" unique_id=902988385 instance=ExtResource("4_06i2t")]
+transform = Transform3D(-8.742276e-09, 1.7769015e-16, -0.19999999, -0.06087656, 0.19050995, 2.660999e-09, 0.19050995, 0.06087656, -8.327453e-09, 0.08971914, 1.2377613, -0.62519646)
+visible = false
+
+[node name="DisruptorMesh" parent="Head/Camera3D/fpsarm" unique_id=639009213 instance=ExtResource("5_ud6ew")]
+transform = Transform3D(0.1920369, -0.032225285, -0.04564369, 0.028663054, 0.19706543, -0.018537633, 0.047960863, 0.01125811, 0.19383755, 0.098636866, 1.2711678, -0.57196426)
+visible = false
+
+[node name="ScannerMesh" parent="Head/Camera3D/fpsarm" unique_id=661502683 instance=ExtResource("3_www16")]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.08681965, 1.2140702, -0.5509827)
+visible = false
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1562276362]
 
@@ -86,10 +121,17 @@ offset_bottom = 42.0
 
 [node name="KeypadInput" type="LineEdit" parent="CanvasLayer" unique_id=1473819734]
 visible = false
-offset_left = 434.0
-offset_top = 308.0
-offset_right = 668.0
-offset_bottom = 419.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -190.0
+offset_top = -42.0
+offset_right = 190.0
+offset_bottom = 42.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="MessagePanel" type="PanelContainer" parent="CanvasLayer" unique_id=1841002551]
 visible = false
@@ -298,4 +340,5 @@ bones/51/scale = Vector3(0.9999999, 0.9999999, 1.0000004)
 
 [connection signal="text_submitted" from="CanvasLayer/ChatInput" to="." method="_on_chat_submitted"]
 
+[editable path="Head/Camera3D/fpsarm"]
 [editable path="AstronautModel"]
