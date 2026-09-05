@@ -14,15 +14,14 @@ func _ready() -> void:
 
 func interact(player: Node = null) -> void:
 	if not PuzzleState.is_act1_complete():
-		_notify(player, "AIRLOCK LOCKED: Complete the Wing 1 investigation and puzzles first.")
+		var missing := PuzzleState.get_act1_missing_steps()
+		_notify(player, "AIRLOCK LOCKED\n\nStill required: " + ", ".join(missing) + "\n\nFollow the objective banner and inspect each marked terminal after solving a puzzle.")
 		return
-	if not is_unlocked:
-		_notify(player, locked_message)
-		return
-		
 	_notify(player, "Airlock Cycling... Transitioning to Research Labs.")
-	
-	if multiplayer.is_server():
+
+	if not multiplayer.has_multiplayer_peer():
+		change_level_rpc(next_scene_path)
+	elif multiplayer.is_server():
 		change_level_rpc.rpc(next_scene_path)
 
 

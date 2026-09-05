@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/reactor_wing.gd" id="1"]
+
+[node name="ReactorWing" type="Node3D"]
+script = ExtResource("1")
+chapter_title = "REACTOR AND POWER"
+chapter_subtitle = "ACT III"
+accent = Color(1, 0.5, 0.08, 1)
+room_length = 38.0
+next_scene_path = "res://scenes/wings/04_excavation/04_excavation.tscn"
+records = Array[String](["GRID EVENT 771\n\nEvery manual shutdown was reversed by an unregistered command originating below the excavation lift.", "MAINTENANCE NOTE\n\nThe drones no longer accept crew credentials. Their patrol routes form the same five glyphs recovered from Core Sample A.", "BLACKOUT FRAGMENT\n\nDirector Farrow routed the full reactor reserve through the command deck. The surge was deliberate, not an accident."])

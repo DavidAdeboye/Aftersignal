@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/excavation_wing.gd" id="1"]
+
+[node name="DeepExcavation" type="Node3D"]
+script = ExtResource("1")
+chapter_title = "DEEP EXCAVATION"
+chapter_subtitle = "ACT IV"
+accent = Color(0.95, 0.67, 0.2, 1)
+room_length = 42.0
+next_scene_path = "res://scenes/wings/05_core/05_core.tscn"
+records = Array[String](["FLIGHT RECORDER A\n\nFarrow: It is not Evelyn. It is a rehearsal assembled from all of us.", "FLIGHT RECORDER B\n\nBray: The moon is not where the signal came from. The moon is what they built around it.", "FLIGHT RECORDER C\n\nFarrow: I am overloading the station. If the ice survives, seal the core. Do not answer when it uses our voices."])

@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/station_chapter.gd" id="1"]
+
+[node name="Aftersignal" type="Node3D"]
+script = ExtResource("1")
+chapter_title = "AFTERSIGNAL"
+chapter_subtitle = "EPILOGUE"
+accent = Color(0.35, 0.9, 0.62, 1)
+room_length = 26.0
+records = Array[String](["OUTBOUND BEACON\n\nBoreas Station has resumed transmission after twelve silent years.", "CREW MANIFEST\n\nRecovered personnel: 0. Active voices detected: 12.", "SALVAGE REPORT\n\nThe moon recedes behind you. In the radio static, something practices saying goodbye."])

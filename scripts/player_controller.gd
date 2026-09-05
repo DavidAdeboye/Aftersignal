@@ -16,6 +16,11 @@ extends CharacterBody3D
 @export var remote_interp_speed: float = 14.0
 var in_chat_range: bool = false
 var signal_quality: float = 0.0
+var inventory_panel: PanelContainer
+var inventory_item_list: ItemList
+var inventory_use_button: Button
+var inventory_drop_button: Button
+var selected_inventory_item: String = ""
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -28,6 +33,11 @@ var signal_quality: float = 0.0
 @onready var message_panel: PanelContainer = $CanvasLayer/MessagePanel
 @onready var message_label: Label = $CanvasLayer/MessagePanel/MessageLabel
 @onready var glyph_pad: Control = $CanvasLayer/GlyphPad
+@onready var inventory_ui: PanelContainer = $CanvasLayer/InventoryPanel
+@onready var inventory_list: ItemList = $CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer/ItemList
+@onready var inventory_use: Button = $CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer/Actions/Use
+@onready var inventory_drop: Button = $CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer/Actions/Drop
+@onready var inventory_close: Button = $CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer/Header/Close
 
 var anim_player: AnimationPlayer = null
 var anim_state: String = "idle"
@@ -158,11 +168,21 @@ func _ready() -> void:
 		_connect_narrative_managers()
 		keypad_input.text_submitted.connect(_on_keypad_submitted)
 		_setup_keypad_input()
+		inventory_list.item_selected.connect(_on_inventory_item_selected)
+		inventory_use.pressed.connect(_on_inventory_use_pressed)
+		inventory_drop.pressed.connect(_on_inventory_drop_pressed)
+		inventory_close.pressed.connect(_toggle_inventory)
 
 	call_deferred("_setup_local_player")
 	call_deferred("_optimize_static_prop_collisions")
 	if is_multiplayer_authority():
 		call_deferred("_setup_viewmodel_motion")
+		if get_tree().current_scene and get_tree().current_scene.scene_file_path.ends_with("landing_bay.scn"):
+			call_deferred("_show_first_entry_briefing")
+		
+
+func _show_first_entry_briefing() -> void:
+	show_message("WELCOME TO BOREAS STATION\n\nWASD move  |  Mouse look  |  E interact  |  Esc release mouse\n\nYou and your partner have different clearances. Read terminals, relay clues over voice/chat, and follow the objective banner. Start by finding the crew manifest.", 9.0)
 
 
 func _setup_keypad_input() -> void:
@@ -382,7 +402,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventMouseButton and event.pressed:
-		if not chat_input.visible and not keypad_input.visible and (glyph_pad == null or not glyph_pad.visible):
+		if not inventory_ui.visible and not chat_input.visible and not keypad_input.visible and (glyph_pad == null or not glyph_pad.visible):
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -394,6 +414,10 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("inventory"):
+		_toggle_inventory()
+		return
+		
 	if not is_multiplayer_authority():
 		return
 
@@ -996,19 +1020,15 @@ func _close_reading_panel() -> void:
 # ============================================================================
 
 func add_item(item_id: String) -> void:
+	inventory[item_id] = true
 	if item_id in ["welding_torch", "signal_disruptor", "scanner_attachment"]:
 		owned_tools[item_id] = true
-		var name_map = {
-			"welding_torch": "Welding Torch (Key 1)",
-			"signal_disruptor": "Signal Disruptor (Key 2)",
-			"scanner_attachment": "Scanner Attachment (Key 3)"
-		}
-		show_message("Acquired: " + name_map[item_id])
 		if equipped_tool == "":
 			_equip_tool(item_id)
-	else:
-		inventory[item_id] = true
 	_update_inventory_hud()
+
+	if is_instance_valid(inventory_ui) and inventory_ui.visible:
+		_refresh_inventory_ui()
 
 
 func has_item(item_id: String) -> bool:
@@ -1018,6 +1038,9 @@ func has_item(item_id: String) -> bool:
 func remove_item(item_id: String) -> void:
 	inventory.erase(item_id)
 	_update_inventory_hud()
+	
+	if is_instance_valid(inventory_ui) and inventory_ui.visible:
+		_refresh_inventory_ui()
 
 
 func _setup_inventory_hud() -> void:
@@ -1610,4 +1633,88 @@ func knockout() -> void:
 	
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	is_ko = false
+
+func _toggle_inventory() -> void:
+	if not is_instance_valid(inventory_ui):
+		return
+	inventory_ui.visible = not inventory_ui.visible
+	
+	if inventory_ui.visible:
+		_refresh_inventory_ui()
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _refresh_inventory_ui() -> void:
+	if not is_instance_valid(inventory_list) or not is_instance_valid(inventory_use) or not is_instance_valid(inventory_drop):
+		return
+	inventory_list.clear()
+	selected_inventory_item = ""
+	inventory_use.disabled = true
+	inventory_drop.disabled = true
+	
+	for item_id in inventory.keys():
+		inventory_list.add_item(_display_item_name(str(item_id)))
+
+func _on_inventory_item_selected(index: int) -> void:
+	var item_ids := inventory.keys()
+	
+	if index < 0 or index >= item_ids.size(): return
+	selected_inventory_item = str(item_ids[index])
+	inventory_use.disabled = false
+	inventory_drop.disabled = false
+
+func _on_inventory_use_pressed() -> void:
+	if selected_inventory_item.is_empty():
+		return
+	# Puzzle interactables consume/check items themselves. Keep the item in the
+	# inventory and provide feedback until item-specific use actions are added.
+	show_message("Selected: " + _display_item_name(selected_inventory_item))
+
+func _display_item_name(item_id: String) -> String:
+	match item_id:
+			"player1_badge":
+					return "Player 1 Clearance Badge"
+			"player2_badge":
+					return "Player 2 Clearance Badge"
+			"key_card":
+					return "Key Card"
+			"welding_torch":
+					return "Welding Torch"
+			_:
+					return item_id.replace("_", " ").capitalize()
+
+func _on_inventory_drop_pressed() -> void:
+	if selected_inventory_item.is_empty(): return
+	if owned_tools.get(selected_inventory_item, false):
+		owned_tools[selected_inventory_item] = false
+		if equipped_tool == selected_inventory_item:
+			equipped_tool = ""
+			_equip_first_owned_tool()
+	remove_item(selected_inventory_item)
+	_spawn_dropped_item(selected_inventory_item)
+	_refresh_inventory_ui()
+
+func _spawn_dropped_item(item_id: String) -> void:
+	var pickup_scene := preload("res://scenes/shared/pickup.tscn")
+	var pickup := pickup_scene.instantiate()
+	get_tree().current_scene.add_child(pickup)
+	pickup.global_position = global_position - global_basis.z *1.0
+	
+	if pickup.has_method("set_item_id"):
+		pickup.set_item_id(item_id)
+
+func _equip_first_owned_tool() -> void:
+	for tool_id in ["welding_torch", "signal_disruptor", "scanner_attachment"]:
+		if owned_tools.get(tool_id, false):
+			_equip_tool(tool_id)
+			return
+	if is_instance_valid(torch_mesh):
+		torch_mesh.visible = false
+	if is_instance_valid(disruptor_mesh):
+		disruptor_mesh.visible = false
+	if is_instance_valid(scanner_mesh):
+		scanner_mesh.visible = false
+	_update_tool_hud()
+
 # wakatime_sync

@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core_wing.gd" id="1"]
+
+[node name="TheCore" type="Node3D"]
+script = ExtResource("1")
+chapter_title = "THE CORE"
+chapter_subtitle = "ACT V"
+accent = Color(0.78, 0.22, 0.12, 1)
+room_length = 32.0
+next_scene_path = "res://scenes/wings/06_aftersignal/06_aftersignal.tscn"
+records = Array[String](["TWELVE\n\nI remember eleven childhoods and none of them are mine. Is remembering enough to make the loss real?", "CONTAINMENT CONTROL\n\nThree commands remain available: AWAKEN, SEAL, COMMUNICATE. The station will preserve the final operator response.", "LAST TRANSMISSION\n\nWhatever you choose, choose together. The signal learned solitude from us. Do not teach it fear as well."])

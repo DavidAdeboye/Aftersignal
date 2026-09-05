@@ -178,6 +178,54 @@ offset_bottom = -3.0
 text = "GLYPH RELAY — drag to draw · G to close"
 horizontal_alignment = 1
 
+[node name="InventoryPanel" type="PanelContainer" parent="CanvasLayer" unique_id=669259996]
+visible = false
+custom_minimum_size = Vector2(420, 320)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -160.0
+offset_right = 210.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/InventoryPanel" unique_id=14667714]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/InventoryPanel/MarginContainer" unique_id=1757659293]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer" unique_id=723837989]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer/Header" unique_id=768631142]
+layout_mode = 2
+text = "INVENTORY"
+
+[node name="Close" type="Button" parent="CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer/Header" unique_id=1422069697]
+layout_mode = 2
+text = "X"
+
+[node name="ItemList" type="ItemList" parent="CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer" unique_id=1126914327]
+custom_minimum_size = Vector2(360, 200)
+layout_mode = 2
+allow_reselect = true
+
+[node name="Actions" type="HBoxContainer" parent="CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer" unique_id=702638054]
+layout_mode = 2
+
+[node name="Use" type="Button" parent="CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer/Actions" unique_id=2118194665]
+layout_mode = 2
+text = "USE"
+
+[node name="Drop" type="Button" parent="CanvasLayer/InventoryPanel/MarginContainer/VBoxContainer/Actions" unique_id=1860393303]
+layout_mode = 2
+text = "DROP"
+
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1925285427]
 replication_config = SubResource("SceneReplicationConfig_rg3vr")
 

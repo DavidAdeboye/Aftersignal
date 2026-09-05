@@ -7,6 +7,10 @@ extends Interactable
 @export var item_name: String = "an item"
 @export var item_id: String = ""
 
+func set_item_id(new_item_id: String) -> void:
+	item_id = new_item_id
+	item_name = new_item_id.replace("_", " ").capitalize()
+
 
 func _ready() -> void:
 	if prompt_text == "Press E to interact":

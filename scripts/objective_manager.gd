@@ -15,7 +15,7 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	# Set default starting objective for Act 1
 	if current_objective.is_empty():
-		set_objective("OBJECTIVE: Investigate Habitation Wing & Locate Crew Manifest")
+		set_objective("START HERE: Find the crew manifest and press E to read it")
 
 
 func set_objective(new_text: String) -> void:

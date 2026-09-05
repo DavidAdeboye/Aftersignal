@@ -50,24 +50,38 @@ func complete_act1_step(step: String) -> void:
 	_act1_steps[step] = true
 	_solved_puzzles["act1_steps"] = _act1_steps.duplicate()
 	save_progress()
+	_show_step_confirmation(step)
 	_update_act1_objective()
+
+func _show_step_confirmation(step: String) -> void:
+	var confirmations := {
+		"roster": "CREW MANIFEST RECORDED",
+		"keypad": "STORAGE ACCESS GRANTED",
+		"missing_room": "QUARTERS 12 ANOMALY RECORDED",
+		"research_logs": "FARROW RESEARCH LOGS RECORDED",
+		"plates": "PRESSURE LOCK OPEN",
+		"lab_evidence": "FINAL EVIDENCE RECORDED"
+	}
+	var local_player := NetworkManager._get_local_player() if NetworkManager else null
+	if local_player and local_player.has_method("show_message"):
+		local_player.show_message(confirmations.get(step, "OBJECTIVE UPDATED"), 3.0)
 
 func _update_act1_objective() -> void:
 	if ObjectiveManager.instance == null:
 		return
 	var objective := "OBJECTIVE: Proceed to the Research Labs airlock"
 	if not is_act1_step_complete("roster"):
-		objective = "OBJECTIVE: Locate and read the 12-person crew manifest"
+		objective = "NEXT: Find the 12-person crew manifest, then press E to read it"
 	elif not is_act1_step_complete("keypad"):
-		objective = "OBJECTIVE: Relay access code 4471 and unlock the storage door"
+		objective = "NEXT: Relay code 4471 to your partner; enter it at the storage keypad"
 	elif not is_act1_step_complete("missing_room"):
-		objective = "OBJECTIVE: Inspect the habitation wall beyond Quarters 11"
+		objective = "NEXT: Inspect the blank wall beyond Quarters 11"
 	elif not is_act1_step_complete("research_logs"):
-		objective = "OBJECTIVE: Find and read Dr. Farrow's research logs"
+		objective = "NEXT: Find Dr. Farrow's research logs and press E to read them"
 	elif not is_act1_step_complete("plates"):
-		objective = "OBJECTIVE: Split up. Stand on both marked pressure plates simultaneously"
+		objective = "NEXT: Split up and stand on both marked pressure plates together"
 	elif not is_act1_step_complete("lab_evidence"):
-		objective = "OBJECTIVE: Inspect the final laboratory evidence"
+		objective = "NEXT: Inspect the final laboratory evidence, then return to the airlock"
 	ObjectiveManager.instance.set_objective(objective)
 
 func is_act1_step_complete(step: String) -> bool:
@@ -78,6 +92,13 @@ func is_act1_complete() -> bool:
 		if not value:
 			return false
 	return true
+
+func get_act1_missing_steps() -> Array[String]:
+	var missing: Array[String] = []
+	for step in _act1_steps:
+		if not _act1_steps[step]:
+			missing.append(str(step))
+	return missing
 
 func mark_act1_clue(clue: String) -> void:
 	_solved_puzzles["act1_clue_" + clue] = true
