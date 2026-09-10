@@ -12,6 +12,9 @@ func _build_environment() -> void:
 	_add_puzzle_console("CoolantRelay", Vector3(-3.8, 1.0, -11), "coolant", "COOLANT RELAY", Color(0.15, 0.65, 1.0))
 	_add_puzzle_console("TurbineRelay", Vector3(3.8, 1.0, -20), "turbine", "TURBINE BUS", Color(1.0, 0.65, 0.1))
 	_add_puzzle_console("ContainmentRelay", Vector3(-3.8, 1.0, -29), "containment", "CONTAINMENT GRID", Color(1.0, 0.18, 0.08))
+	for z in [-8.0, -16.0, -24.0, -32.0]:
+		_add_box("ReactorPipe", Vector3(4.8, 2.4, z), Vector3(0.45, 3.8, 0.45), Color(0.22, 0.08, 0.03), true, true)
+		_add_light(Vector3(4.2, 2.8, z), accent)
 	var drone := DRONE_SCENE.instantiate()
 	drone.name = "ReactorDrone"
 	drone.position = Vector3(0, 1.5, -18)
@@ -26,15 +29,15 @@ func _spawn_players() -> void:
 
 func puzzle_action(action_id: String, player: Node) -> void:
 	if _grid_stable:
-		_notify_player(player, "POWER GRID STABLE: excavation lift power restored.")
+		_notify_player(player, "POWER IS ON. The lift is ready.")
 		return
 	var expected: String = ROUTE[_route_index]
 	if action_id != expected:
 		_route_index = 0
-		_notify_player(player, "ROUTING FAULT: sequence reset. Follow COOLANT > TURBINE > CONTAINMENT.")
+		_notify_player(player, "Wrong switch. Start again: COOLANT, then TURBINE, then CONTAINMENT.")
 	else:
 		_route_index += 1
-		_notify_player(player, "RELAY ACCEPTED %d/3" % _route_index)
+		_notify_player(player, "Correct switch: %d of 3" % _route_index)
 		if _route_index == ROUTE.size():
 			_grid_stable = true
 	_update_objective()
@@ -46,11 +49,11 @@ func _update_objective() -> void:
 	if _objective_label == null:
 		return
 	if _found.size() < 3:
-		_objective_label.text = "REACTOR // RECOVER GRID RECORDS %d/3" % _found.size()
+		_objective_label.text = "REACTOR: Read the power records (%d/3)" % _found.size()
 	elif not _grid_stable:
-		_objective_label.text = "REACTOR // ROUTE COOLANT > TURBINE > CONTAINMENT (%d/3)" % _route_index
+		_objective_label.text = "REACTOR: Use COOLANT, TURBINE, then CONTAINMENT (%d/3)" % _route_index
 	else:
-		_objective_label.text = "REACTOR // GRID STABLE - LIFT UNLOCKED"
+		_objective_label.text = "REACTOR: Power on. Use the lift."
 
 func _add_puzzle_console(node_name: String, pos: Vector3, id: String, title: String, color: Color) -> void:
 	var console := StaticBody3D.new()
@@ -60,7 +63,7 @@ func _add_puzzle_console(node_name: String, pos: Vector3, id: String, title: Str
 	console.set("action_id", id)
 	console.set("console_title", title)
 	add_child(console)
-	_add_body_visual(console, Vector3(1.5, 1.6, 0.45), Color(0.04, 0.05, 0.07), color)
+	_add_terminal_visual(console)
 
 func _notify_player(player: Node, text: String) -> void:
 	if player and player.has_method("show_message"):

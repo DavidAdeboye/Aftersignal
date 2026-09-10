@@ -8,13 +8,13 @@ func _ready() -> void:
 	if prompt_text == "Press E to interact":
 		prompt_text = "Press E to inspect wall gap"
 	
-	message = """[HABITATION WING STRUCTURAL ANOMALY]
+	message = """ROOM 12 CHECK
 
-You examine the seamless steel wall between Quarters 11 and the end bulkhead.
+	This wall is between Room 11 and the end of the hall.
 
 According to the station blueprint, this gap should contain Quarters 12. However, the steel plating is completely continuous — there are no door frames, no wiring conduits, and no evidence that a 12th room was ever cut into the station superstructure.
 
-Station personnel manifest lists 12 crew... but this wing was physically built for only 11."""
+	The crew list says there are 12 people. This hall only has 11 rooms."""
 
 
 func interact(player: Node = null) -> void:

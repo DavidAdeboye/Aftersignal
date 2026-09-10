@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://dnfycm8sul2t1"]
+
+[ext_resource type="Script" uid="uid://dc6ito5wy66hs" path="res://scripts/landing_bay.gd" id="1"]
+
+[node name="LandingBay" type="Node3D" unique_id=225238049]
+script = ExtResource("1")
+chapter_title = "LANDING BAY"
+chapter_subtitle = "ACT I"
+accent = Color(0.9, 0.55, 0.15, 1)
+room_length = 30.0
+next_scene_path = "res://scenes/wings/02_research_labs/02_research_labs.tscn"
+records = Array[String](["CREW MANIFEST // BOREAS STATION
+
+Twelve personnel assigned. Eleven quarters provisioned. The manifest checksum is valid, but the architectural survey lists only eleven doors.", "FARROW FIELD LOG // DAY 19
+
+The relay beneath the ice repeats our questions before we ask them. Callum says the response is interference. I am no longer convinced.", "HABITATION AUDIT // ACCESS RESTRICTED
+
+Quarter 12 has no doorway, conduit, or maintenance record. Do not cut into the wall without a second operator present."])

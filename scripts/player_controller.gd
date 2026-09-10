@@ -60,7 +60,9 @@ var static_rect: ColorRect = null
 var inventory: Dictionary = {}
 var inventory_label: Label = null
 
-var spawn_points: Array = [Vector3(-2, 1, 13), Vector3(2, 1, 13)]
+# The landing bay extends from z=0 toward negative z; keep both players just
+# inside the entry so they spawn on the procedural floor.
+var spawn_points: Array = [Vector3(-2, 1, -2.5), Vector3(2, 1, -2.5)]
 var spawn_colors: Array = [Color(0.15, 0.55, 0.95), Color(0.95, 0.45, 0.15)]
 var spawn_index: int = 0
 var chat_lines: Array[String] = []
@@ -117,6 +119,7 @@ var viewmodel_base_position: Vector3 = Vector3.ZERO
 var viewmodel_base_rotation: Vector3 = Vector3.ZERO
 var mouse_delta_x: float = 0.0
 var mouse_delta_y: float = 0.0
+var _spawn_debug_ticks: int = 0
 
 
 func _enter_tree() -> void:
@@ -127,6 +130,7 @@ func _ready() -> void:
 	camera.fov = 90.0
 	spawn_index = 0 if int(str(name)) == 1 else 1
 	position = spawn_points[spawn_index]
+	print("[PlayerSpawn] name=%s authority=%s scene=%s position=%s parent=%s" % [name, is_multiplayer_authority(), get_tree().current_scene.scene_file_path, global_position, get_parent().get_path()])
 	inventory["player1_badge" if spawn_index == 0 else "player2_badge"] = true
 
 	var astronaut_model: Node3D = get_node_or_null("AstronautModel") as Node3D
@@ -174,10 +178,15 @@ func _ready() -> void:
 		inventory_close.pressed.connect(_toggle_inventory)
 
 	call_deferred("_setup_local_player")
+	# The chapter builds its procedural floor immediately before spawning players,
+	# but the first physics tick can still run before Jolt has registered the new
+	# static bodies. Re-apply the spawn after that tick so a fresh player cannot
+	# begin the session already below the floor.
+	call_deferred("_stabilize_spawn")
 	call_deferred("_optimize_static_prop_collisions")
 	if is_multiplayer_authority():
 		call_deferred("_setup_viewmodel_motion")
-		if get_tree().current_scene and get_tree().current_scene.scene_file_path.ends_with("landing_bay.scn"):
+		if get_tree().current_scene and get_tree().current_scene.scene_file_path.ends_with("landing_bay.tscn"):
 			call_deferred("_show_first_entry_briefing")
 		
 
@@ -395,6 +404,17 @@ func _setup_local_player() -> void:
 	camera.current = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
+
+func _stabilize_spawn() -> void:
+	if not is_multiplayer_authority():
+		return
+	await get_tree().physics_frame
+	print("[PlayerSpawn] after_physics name=%s position=%s on_floor=%s velocity=%s floor_node=%s" % [name, global_position, is_on_floor(), velocity, get_tree().current_scene.get_node_or_null("Floor")])
+	if global_position.y < 0.25 or not is_on_floor():
+		global_position = spawn_points[spawn_index]
+		velocity = Vector3.ZERO
+		print("[PlayerSpawn] corrected name=%s position=%s" % [name, global_position])
+
 func _input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
 		return
@@ -561,6 +581,9 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0, walk_speed)
 
 	move_and_slide()
+	if _spawn_debug_ticks < 12:
+		_spawn_debug_ticks += 1
+		print("[PlayerPhysics] name=%s tick=%d position=%s on_floor=%s velocity=%s collisions=%d" % [name, _spawn_debug_ticks, global_position, is_on_floor(), velocity, get_slide_collision_count()])
 	_update_interactable()
 	_update_chat_range()
 
@@ -575,9 +598,14 @@ func _physics_process(delta: float) -> void:
 		
 	_update_animation()
 
-	if global_position.y < -20:
+	# Recover immediately if the character slips through a procedural floor.
+	# Waiting until -20 leaves the camera in the void for several seconds and
+	# makes the failure look like a broken scene instead of a transient physics
+	# registration issue.
+	if global_position.y < 0.25:
 		global_position = spawn_points[spawn_index]
 		velocity = Vector3.ZERO
+		print("[PlayerPhysics] recovered_from_fall name=%s position=%s" % [name, global_position])
 
 	# Update active beams
 	for i in range(active_beams.size() - 1, -1, -1):

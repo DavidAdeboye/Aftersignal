@@ -17,6 +17,6 @@ func _ready() -> void:
 func interact(player: Node = null) -> void:
 	PuzzleState.mark_act1_clue("access_code")
 	if player and player.has_method("show_reading_panel"):
-		player.show_reading_panel(label, "ACCESS CREDENTIAL\n\n" + code + "\n\nTEAM PROCEDURE\n1. Keep this terminal open.\n2. Tell your partner the four digits over voice/chat.\n3. Your partner enters the code at the sealed-door keypad.\n4. You both regroup at the newly opened storage door.")
+		player.show_reading_panel(label, "STORAGE CODE\n\n" + code + "\n\nTell your partner this code. They must enter it at the storage keypad.")
 	else:
 		_notify(player, label + ":\n" + code)

@@ -33,6 +33,10 @@ text = "Aftersignal"
 layout_mode = 2
 text = "Host Game"
 
+[node name="SinglePlayerButton" type="Button" parent="Panel1" unique_id=1752622875]
+layout_mode = 2
+text = "Single Player"
+
 [node name="HBoxContainer" type="HBoxContainer" parent="Panel1" unique_id=2028413865]
 layout_mode = 2
 

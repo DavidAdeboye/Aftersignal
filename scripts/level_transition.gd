@@ -13,8 +13,12 @@ func _ready() -> void:
 
 
 func interact(player: Node = null) -> void:
-	if not PuzzleState.is_act1_complete():
-		var missing := PuzzleState.get_act1_missing_steps()
+	var required_steps := ["roster", "keypad", "missing_room", "research_logs"]
+	var missing: Array[String] = []
+	for step in required_steps:
+		if not PuzzleState.is_act1_step_complete(step):
+			missing.append(step)
+	if not missing.is_empty():
 		_notify(player, "AIRLOCK LOCKED\n\nStill required: " + ", ".join(missing) + "\n\nFollow the objective banner and inspect each marked terminal after solving a puzzle.")
 		return
 	_notify(player, "Airlock Cycling... Transitioning to Research Labs.")

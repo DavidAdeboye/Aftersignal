@@ -9,4 +9,4 @@ chapter_subtitle = "ACT V"
 accent = Color(0.78, 0.22, 0.12, 1)
 room_length = 32.0
 next_scene_path = "res://scenes/wings/06_aftersignal/06_aftersignal.tscn"
-records = Array[String](["TWELVE\n\nI remember eleven childhoods and none of them are mine. Is remembering enough to make the loss real?", "CONTAINMENT CONTROL\n\nThree commands remain available: AWAKEN, SEAL, COMMUNICATE. The station will preserve the final operator response.", "LAST TRANSMISSION\n\nWhatever you choose, choose together. The signal learned solitude from us. Do not teach it fear as well."])
+records = Array[String](["TWELVE\n\nI remember eleven lives, but none of them are mine. Am I real if I remember them?", "CORE CONTROL\n\nYou have three choices: AWAKEN the core, SEAL it forever, or COMMUNICATE with it.", "LAST MESSAGE\n\nChoose together. The signal learned to be alone from us. Do not teach it fear."])

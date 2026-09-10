@@ -23,15 +23,15 @@ func _build_environment() -> void:
 
 func puzzle_action(action_id: String, player: Node) -> void:
 	if _recorder_complete:
-		_notify_player(player, "FLIGHT RECORDER COMPLETE: blackout origin confirmed.")
+		_notify_player(player, "The flight recorder is complete. You know who caused the blackout.")
 		return
 	var expected: String = FRAGMENT_ORDER[_fragment_index]
 	if action_id != expected:
 		_fragment_index = 0
-		_notify_player(player, "TIMELINE CORRUPTED: fragments reset. Reconstruct speaker, warning, then surge.")
+		_notify_player(player, "Wrong order. Try FARROW, then BRAY, then SURGE.")
 	else:
 		_fragment_index += 1
-		_notify_player(player, "BLACK-BOX FRAGMENT LOCKED %d/3" % _fragment_index)
+		_notify_player(player, "Recorder piece found: %d of 3" % _fragment_index)
 		if _fragment_index == FRAGMENT_ORDER.size():
 			_recorder_complete = true
 	_update_objective()
@@ -57,7 +57,7 @@ func _add_fragment(id: String, pos: Vector3) -> void:
 	console.set("action_id", id)
 	console.set("console_title", id.to_upper() + " FRAGMENT")
 	add_child(console)
-	_add_body_visual(console, Vector3(1.2, 1.2, 0.35), Color(0.06, 0.04, 0.02), accent)
+	_add_terminal_visual(console)
 
 func _add_crystal_cluster(root: Node3D) -> void:
 	for x in [-1.0, 0.0, 1.0]:

@@ -69,19 +69,19 @@ func _show_step_confirmation(step: String) -> void:
 func _update_act1_objective() -> void:
 	if ObjectiveManager.instance == null:
 		return
-	var objective := "OBJECTIVE: Proceed to the Research Labs airlock"
+	var objective := "NEXT: Go to the Research Labs airlock"
 	if not is_act1_step_complete("roster"):
-		objective = "NEXT: Find the 12-person crew manifest, then press E to read it"
+		objective = "NEXT: Find the crew list and read it"
 	elif not is_act1_step_complete("keypad"):
-		objective = "NEXT: Relay code 4471 to your partner; enter it at the storage keypad"
+		objective = "NEXT: Tell your partner code 4471, then use the storage keypad"
 	elif not is_act1_step_complete("missing_room"):
-		objective = "NEXT: Inspect the blank wall beyond Quarters 11"
+		objective = "NEXT: Check the blank wall after Room 11"
 	elif not is_act1_step_complete("research_logs"):
-		objective = "NEXT: Find Dr. Farrow's research logs and press E to read them"
+		objective = "NEXT: Find and read Dr. Farrow's log"
 	elif not is_act1_step_complete("plates"):
-		objective = "NEXT: Split up and stand on both marked pressure plates together"
+		objective = "NEXT: Stand on both marked floor plates together"
 	elif not is_act1_step_complete("lab_evidence"):
-		objective = "NEXT: Inspect the final laboratory evidence, then return to the airlock"
+		objective = "NEXT: Read the last clue, then return to the airlock"
 	ObjectiveManager.instance.set_objective(objective)
 
 func is_act1_step_complete(step: String) -> bool:

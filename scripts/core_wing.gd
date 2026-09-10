@@ -9,6 +9,17 @@ var _ending_choice := ""
 func _build_environment() -> void:
 	super._build_environment()
 	_add_core_visual()
+	for angle in range(0, 360, 45):
+		var rad := deg_to_rad(float(angle))
+		var pillar := MeshInstance3D.new()
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.22
+		mesh.bottom_radius = 0.5
+		mesh.height = 4.0
+		pillar.mesh = mesh
+		pillar.position = Vector3(cos(rad) * 5.2, 2.0, -16.0 + sin(rad) * 5.2)
+		pillar.material_override = _core_material()
+		add_child(pillar)
 	for data in [["relay_a", -4.5, -12.0], ["relay_b", 4.5, -18.0], ["relay_c", -4.5, -24.0]]:
 		_add_console(str(data[0]), Vector3(float(data[1]), 1.0, float(data[2])), str(data[0]).to_upper())
 	for data in [["awaken", -3.8], ["seal", 0.0], ["communicate", 3.8]]:
@@ -67,7 +78,7 @@ func _add_console(id: String, pos: Vector3, title: String) -> void:
 	console.set("console_title", title)
 	add_child(console)
 	var color := accent if id.begins_with("relay_") else Color(0.25, 0.9, 0.65)
-	_add_body_visual(console, Vector3(1.3, 1.5, 0.4), Color(0.045, 0.035, 0.04), color)
+	_add_terminal_visual(console)
 
 func _add_core_visual() -> void:
 	var core := MeshInstance3D.new()
@@ -84,6 +95,14 @@ func _add_core_visual() -> void:
 	mat.emission_energy_multiplier = 3.5
 	core.material_override = mat
 	add_child(core)
+
+func _core_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.12, 0.015, 0.025)
+	mat.emission_enabled = true
+	mat.emission = accent
+	mat.emission_energy_multiplier = 2.0
+	return mat
 
 func _notify_player(player: Node, text: String) -> void:
 	if player and player.has_method("show_message"):

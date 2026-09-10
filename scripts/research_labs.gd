@@ -10,15 +10,21 @@ func _build_environment() -> void:
 	terminal.position = Vector3(0, 1.1, -20.5)
 	terminal.set("record_id", "override")
 	terminal.set("record_title", "GLYPH OVERRIDE CONSOLE")
-	terminal.set("message", "GLYPH OVERRIDE REQUIRED\n\nThe lab door will accept a shared symbol only after all three records are reviewed. Open the glyph pad with G, draw the five-point relay mark, then return here and confirm the pattern.")
+	terminal.set("message", "LAB DOOR LOCKED\n\nRead all three lab records. Then open the drawing pad with G and draw the relay mark. Return here to open the door.")
 	add_child(terminal)
-	_add_body_visual(terminal, Vector3(1.8, 1.5, 0.4), Color(0.03, 0.11, 0.13), accent)
+	_add_terminal_visual(terminal)
+	for z in [-8.0, -16.0, -24.0]:
+		_add_box("LabGlassBay", Vector3(0, 2.0, z), Vector3(10.5, 3.2, 0.12), Color(0.05, 0.18, 0.24), false, true)
+		_add_box("LabBench", Vector3(-4.6, 0.65, z + 1.0), Vector3(3.5, 0.35, 1.2), Color(0.12, 0.16, 0.18), true)
 
 func record_found(record_id: String) -> void:
 	if record_id == "override":
 		if _found.size() < 3:
 			return
 		_override_complete = true
+		var local_player := NetworkManager._get_local_player()
+		if local_player and local_player.has_method("show_message"):
+			local_player.show_message("LAB DOOR OPEN\n\nThe records match. The relay mark is accepted.", 4.0)
 		_update_objective()
 		return
 	super.record_found(record_id)

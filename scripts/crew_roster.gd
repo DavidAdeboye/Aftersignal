@@ -7,7 +7,7 @@ class_name CrewRosterTerminal
 func _ready() -> void:
 	if prompt_text == "Press E to interact":
 		prompt_text = "Press E to read station crew roster"
-	message = """=== BOREAS STATION PERSONNEL MANIFEST (12 CREW) ===
+	message = """BOREAS STATION CREW LIST
 
 [01] DR. OSEI FARROW       - Lead Exobiologist / Director
 [02] CALLUM BRAY           - Systems Specialist
@@ -22,7 +22,7 @@ func _ready() -> void:
 [11] LIAM O'CONNOR         - Maintenance Lead
 [12] EVELYN THORNE         - Sub-surface Surveyor
 
-[SYSTEM NOTE]: All 12 berths verified active at launch."""
+All 12 crew were marked alive when the station started."""
 
 func interact(player: Node = null) -> void:
 	if player and player.has_method("has_item") and not player.has_item("player1_badge"):

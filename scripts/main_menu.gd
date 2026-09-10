@@ -1,6 +1,7 @@
 extends Control
 
 @onready var host_button: Button = $Panel1/HostButton
+@onready var single_player_button: Button = $Panel1/SinglePlayerButton
 @onready var join_button: Button = $Panel1/HBoxContainer/JoinButton
 @onready var ip_input: LineEdit = $Panel1/HBoxContainer/IPInput
 @onready var status_label: Label = $Panel1/StatusLabel
@@ -9,6 +10,7 @@ extends Control
 
 func _ready() -> void:
 	host_button.pressed.connect(_on_host_pressed)
+	single_player_button.pressed.connect(_on_single_player_pressed)
 	join_button.pressed.connect(_on_join_pressed)
 	reset_button.pressed.connect(_on_reset_pressed)
 
@@ -145,6 +147,7 @@ func _setup_menu_styling() -> void:
 
 	var buttons: Array[Button] = [
 		host_button,
+		single_player_button,
 		join_button,
 		reset_button
 	]
@@ -180,8 +183,13 @@ func _on_reset_pressed() -> void:
 
 func _on_host_pressed() -> void:
 	status_label.text = "Hosting..."
-	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.scn")
+	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.tscn")
 	NetworkManager.request_host()
+
+func _on_single_player_pressed() -> void:
+	NetworkManager.game_started = false
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.tscn")
 
 
 func _on_join_pressed() -> void:
@@ -189,9 +197,9 @@ func _on_join_pressed() -> void:
 	if ip == "":
 		ip = "127.0.0.1"
 	status_label.text = "Joining " + ip + "..."
-	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.scn")
+	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.tscn")
 	NetworkManager.request_join(ip)
 
 
 func _go_to_game() -> void:
-	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.scn")
+	get_tree().change_scene_to_file("res://scenes/wings/01_landing_bay/landing_bay.tscn")

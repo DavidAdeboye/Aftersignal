@@ -41,6 +41,12 @@ func check_code(code: String) -> bool:
 			if name == "Keypad":
 				PuzzleState.complete_act1_step("keypad")
 			print("Correct code — door unlocked!")
+		elif name == "Keypad":
+			# The landing-bay prototype has no animated storage door yet, but the
+			# keypad still advances the shared co-op objective.
+			PuzzleState.mark_puzzle_solved(name)
+			PuzzleState.complete_act1_step("keypad")
+			print("Correct code - keypad objective complete.")
 		else:
 			push_warning("Keypad has no valid door_path assigned.")
 			return false

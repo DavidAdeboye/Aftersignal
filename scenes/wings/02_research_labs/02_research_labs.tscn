@@ -8,4 +8,4 @@ chapter_title = "RESEARCH LABS"
 chapter_subtitle = "ACT II"
 accent = Color(0.1, 0.72, 0.95, 1)
 next_scene_path = "res://scenes/wings/03_reactor/03_reactor.tscn"
-records = Array[String](["FARROW LOG 04\n\nThe specimen does not answer questions. It predicts them. Yesterday it drew our relay glyph before Callum had finished inventing it.", "BRAY PRIVATE MEMO\n\nThe ice-core markings predate Boreas Station by at least fourteen thousand years. Corporate ordered the dating run deleted.", "OBSERVATION 12\n\nEvelyn entered the chamber twice this morning. The second Evelyn knew every name on the manifest, but not which room was hers."])
+records = Array[String](["DR. FARROW'S LOG\n\nThe thing under the ice knows what we will say before we say it. It drew our signal mark before we created it.", "CALLUM'S NOTE\n\nThe marks in the ice are far older than this station. The company told us to hide that fact.", "LAB REPORT\n\nEvelyn entered the room twice. The second Evelyn knew every crew member, but did not know her own room."])
